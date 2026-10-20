@@ -3,16 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>免費文件去識別化工具｜PDF、Word、Excel、掃描檔個資遮罩與還原（資料不上傳）</title>
+    <title>明昌企業版・文件去識別化工具｜純前端端點安全・明昌客戶自動編碼</title>
     <meta name="description" content="免費、免安裝、資料不上傳的線上文件去識別化工具：自動偵測 PDF（含掃描檔）、Word、Excel、TXT 中的姓名、身分證、手機、地址、Email、公司、統編並遮罩，人工覆核後下載；可用 CSV 編碼表完整還原，也可只輸出 [姓名] 或 ○○○。全程在瀏覽器內處理。" />
     <meta name="keywords" content="去識別化, 個資去識別化, 個資遮罩, 個資遮蔽, 文件去識別化, 個人資料保護, 個資法, 假名化, 匿名化, PDF 去識別化, 掃描檔 OCR, Word 去識別化, Excel 去識別化, 身分證遮罩, 資料脫敏, ChatGPT 個資, de-identification, PII redaction, 純前端" />
-    <meta name="author" content="Dean Lin" />
+    <meta name="author" content="張詠翔 Elliott Chang (明昌國際)" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
-    <meta name="theme-color" content="#f2f0e9" />
+    <meta name="theme-color" content="#01bd70" />
     <link rel="canonical" href="https://deanlin.net/data-deidentification/" />
     <link rel="alternate" type="text/markdown" href="https://deanlin.net/data-deidentification/llms-full.txt" title="完整說明（Markdown，供 AI 閱讀）" />
-    <link rel="icon" type="image/png" href="./favicon.png" />
-    <link rel="apple-touch-icon" href="./favicon.png" />
+    <link rel="icon" type="image/x-icon" href="./favicon.ico?v=machan_2026" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=machan_2026" />
+    <link rel="shortcut icon" href="./favicon.ico?v=machan_2026" />
+    <link rel="apple-touch-icon" href="./favicon.png?v=machan_2026" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="文件去識別化工具" />
@@ -95,14 +97,14 @@
             "標記方式：可還原的編碼（附 CSV 編碼表），或不需還原的類別標記 [姓名]、○ 佔位",
             "純前端處理，資料不離開瀏覽器，可離線與自行架設"
           ],
-          "softwareHelp": { "@type": "CreativeWork", "url": "https://github.com/dean9703111/data-deidentification#readme" },
+          "softwareHelp": { "@type": "CreativeWork", "url": "./明昌企業版_文件去識別化工具_操作手冊.pdf" },
           "author": { "@id": "https://deanlin.net/#person" }
         },
         {
           "@type": "SoftwareSourceCode",
-          "@id": "https://github.com/dean9703111/data-deidentification#source",
+          "@id": "https://deanlin.net/data-deidentification/#source",
           "name": "data-deidentification",
-          "codeRepository": "https://github.com/dean9703111/data-deidentification",
+          "codeRepository": "https://deanlin.net/data-deidentification/",
           "programmingLanguage": "TypeScript",
           "runtimePlatform": "Web browser",
           "license": "https://opensource.org/licenses/MIT",
@@ -244,7 +246,7 @@
             {
               "@type": "Question",
               "name": "這個工具要收費嗎？可以自行架設嗎？",
-              "acceptedAnswer": { "@type": "Answer", "text": "完全免費，並以 MIT 授權開源。執行 npm run build 產出的 dist/ 是純靜態網站，可以放到 GitHub Pages、內網檔案伺服器或任何靜態空間自行架設，也可以直接以檔案方式開啟。" }
+              "acceptedAnswer": { "@type": "Answer", "text": "完全免費，並以 MIT 授權開源。執行 npm run build 產出的 dist/ 是純靜態網站，可以放到企業內網伺服器或任何靜態空間自行架設，也可以直接以檔案方式開啟。" }
             }
           ]
         },
@@ -258,7 +260,7 @@
             "https://www.facebook.com/deanlinbao",
             "https://www.threads.com/@deanlin5288",
             "https://www.youtube.com/@dlcorner",
-            "https://github.com/dean9703111"
+            "https://deanlin.net/"
           ]
         }
       ]
@@ -271,7 +273,7 @@
       <main class="seo-fallback">
         <h1>文件去識別化工具</h1>
         <p>純前端、資料不出電腦的文件去識別化工具。上傳 PDF、Word、Excel、TXT、Markdown 或貼上文字，自動偵測姓名、身分證字號、手機、市話、地址、電子郵件、公司名稱、統一編號與自訂識別碼；預覽、人工覆核後下載去識別化文件與 CSV 編碼表，之後可完整還原。</p>
-        <noscript><p>本工具需要啟用 JavaScript 才能運作。原始碼與說明：<a href="https://github.com/dean9703111/data-deidentification">github.com/dean9703111/data-deidentification</a></p></noscript>
+        <noscript><p>本工具需要啟用 JavaScript 才能運作。本系統專為明昌國際企業端點安全作業設計，純前端端點運算。</p></noscript>
       </main>
       <!-- Static "about / how-to / FAQ" content: readable without JavaScript; the app keeps it below the panels after mount. -->
       <section id="site-info" class="site-info" aria-labelledby="site-info-title">
@@ -386,13 +388,13 @@
             </details>
             <details>
               <summary>這個工具要收費嗎？可以自行架設嗎？</summary>
-              <p>完全免費，並以 MIT 授權開源。執行 npm run build 產出的 dist/ 是純靜態網站，可以放到 GitHub Pages、內網檔案伺服器或任何靜態空間自行架設，也可以直接以檔案方式開啟。</p>
+              <p>完全免費，並以 MIT 授權開源。執行 npm run build 產出的 dist/ 是純靜態網站，可以放到企業內網伺服器或任何靜態空間自行架設，也可以直接以檔案方式開啟。</p>
             </details>
           </div>
           <h3 lang="en">In English</h3>
           <p lang="en">Data De-identification Tool is a free, open-source, browser-only tool for redacting personal data (PII) in Traditional Chinese (Taiwan) documents. It detects names, national ID numbers, mobile and landline numbers, addresses, email addresses, company names and tax IDs in PDF (including scanned PDFs, read with in-browser OCR), Word, Excel, TXT and Markdown files, lets you review every match, and exports the redacted file in its original format. Each value becomes a reversible code with a CSV mapping table, or a plain category label or ○ placeholders when no restoring is needed. Files never leave your browser.</p>
 
-          <p class="muted small">完整操作說明與截圖見 <a href="https://github.com/dean9703111/data-deidentification#readme" target="_blank" rel="noopener">GitHub 專案頁</a>；範例檔皆為程式產生的虛構資料。給 AI 的網站摘要：<a href="llms.txt">llms.txt</a>、<a href="llms-full.txt">llms-full.txt</a>。最後更新：<time datetime="__BUILD_DATE__">__BUILD_DATE__</time></p>
+          <p class="muted small">完整操作說明與截圖見 <a href="./明昌企業版_文件去識別化工具_操作手冊.pdf" target="_blank" rel="noopener">明昌企業版操作手冊 (PDF)</a>；範例檔皆為程式產生的虛構資料。給 AI 的網站摘要：<a href="llms.txt">llms.txt</a>、<a href="llms-full.txt">llms-full.txt</a>。最後更新：<time datetime="__BUILD_DATE__">__BUILD_DATE__</time></p>
         </div>
       </section>
     </div>

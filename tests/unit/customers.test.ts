@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { detect } from '../../src/core/detector';
 import { BUILTIN_PATTERNS } from '../../src/core/patterns';
-import { CodeBook, parseMarkers } from '../../src/core/codes';
+import { CodeBook } from '../../src/core/codes';
 import { applyRedactions } from '../../src/core/redactor';
 import { restore } from '../../src/core/restorer';
 import { findCustomerByAlias, CUSTOMER_BY_CODE } from '../../src/core/customers-data';
