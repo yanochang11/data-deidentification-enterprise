@@ -12,23 +12,33 @@ interface Candidate {
   start: number;
   end: number;
   retention?: Retention;
+  customCode?: string;
 }
 
-function makeItem(text: string, start: number, end: number, category: Category, book: CodeBook, origin: 'auto' | 'manual', retention?: Retention): RedactionItem {
+function makeItem(
+  text: string,
+  start: number,
+  end: number,
+  category: Category,
+  book: CodeBook,
+  origin: 'auto' | 'manual',
+  retention?: Retention,
+  customCode?: string,
+): RedactionItem {
   const original = text.slice(start, end);
   const item: RedactionItem = { id: newId(), category, original, start, end, code: '', origin, active: true };
   if (retention) item.retention = retention;
-  applySplit(item, retention, book);
+  applySplit(item, retention, book, customCode);
   return item;
 }
 
-function applySplit(item: RedactionItem, retention: Retention | undefined, book: CodeBook): void {
+function applySplit(item: RedactionItem, retention: Retention | undefined, book: CodeBook, customCode?: string): void {
   const { head, tail } = splitFor(item.original, retention, item.category);
   if (head) item.head = head;
   else delete item.head;
   if (tail) item.tail = tail;
   else delete item.tail;
-  item.code = book.codeFor(item.category, item.original, head, tail);
+  item.code = book.codeFor(item.category, item.original, head, tail, customCode);
 }
 
 /**
@@ -41,7 +51,7 @@ export function resplitItems(items: RedactionItem[], book: CodeBook, resolve: (i
 
 export function compilePattern(p: Pattern): RegExp | null {
   try {
-    return new RegExp(p.regex, 'gu');
+    return new RegExp(p.regex, p.flags ?? 'gu');
   } catch {
     return null;
   }
@@ -78,10 +88,12 @@ export function detect(text: string, patterns: Pattern[], book: CodeBook = new C
       // A shorter accepted length keeps only that much; matching resumes right after it.
       const length = verdict === true ? m[0].length : Math.min(verdict, m[0].length);
       if (length < m[0].length) re.lastIndex = m.index + length;
-      cands.push({ category: p.category, start: m.index, end: m.index + length, retention: p.retention });
+      const matched = text.slice(m.index, m.index + length);
+      const customCode = p.getCustomCode ? p.getCustomCode(matched) : undefined;
+      cands.push({ category: p.category, start: m.index, end: m.index + length, retention: p.retention, customCode });
     }
   }
-  return resolveOverlaps(cands).map((c) => makeItem(text, c.start, c.end, c.category, book, 'auto', c.retention));
+  return resolveOverlaps(cands).map((c) => makeItem(text, c.start, c.end, c.category, book, 'auto', c.retention, c.customCode));
 }
 
 export class OverlapError extends Error {
@@ -98,11 +110,12 @@ export function addManualItem(
   category: Category,
   book: CodeBook,
   retention?: Retention,
+  customCode?: string,
 ): RedactionItem {
   if (start < 0 || end > text.length || start >= end) throw new Error('選取範圍無效');
   const overlaps = items.some((it) => it.active && start < it.end && end > it.start);
   if (overlaps) throw new OverlapError();
-  const item = makeItem(text, start, end, category, book, 'manual', retention);
+  const item = makeItem(text, start, end, category, book, 'manual', retention, customCode);
   const next = [...items, item].sort((a, b) => a.start - b.start);
   items.length = 0;
   items.push(...next);
