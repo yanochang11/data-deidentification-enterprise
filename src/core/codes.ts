@@ -2,7 +2,7 @@ import type { MappingEntry } from './types';
 
 export const CODE_LENGTH = 6;
 
-export const MARKER_REGEX = /\[([^\[\]:]{1,10}):([0-9a-f]{6})\]/g;
+export const MARKER_REGEX = /\[([^\[\]:]{1,10}):([0-9a-f]{6}|[A-Z]{2}\d{4})\]/g;
 
 export function generateCode(used: Set<string>): string {
   const bytes = new Uint8Array(CODE_LENGTH / 2);
@@ -30,11 +30,16 @@ export class CodeBook {
     return `${category}:${head}:${tail}:${original}`; // category names never contain ':'
   }
 
-  codeFor(category: string, original: string, head = 0, tail = 0): string {
+  codeFor(category: string, original: string, head = 0, tail = 0, customCode?: string): string {
     const key = CodeBook.key(category, original, head, tail);
     let code = this.byValue.get(key);
     if (code === undefined) {
-      code = generateCode(this.used);
+      if (customCode) {
+        code = customCode;
+        this.used.add(code);
+      } else {
+        code = generateCode(this.used);
+      }
       this.byValue.set(key, code);
     }
     return code;

@@ -1,3 +1,4 @@
+import { CUSTOMER_REGEX_SOURCE, findCustomerByAlias } from './customers-data';
 import type { Pattern } from './types';
 import { isValidTaxId, isValidTwId } from './twid';
 import { ibanLength, isBirthDate, isCardNumber, isIpv6, isSsn, phoneLength } from './intl';
@@ -97,6 +98,26 @@ function isPlausibleName(m: string, before = ''): boolean {
 }
 
 export const BUILTIN_PATTERNS: Pattern[] = [
+  {
+    id: 'machan-customers',
+    name: '明昌企業客戶（全名／縮寫／簡稱）',
+    group: 'tw',
+    note: '對照明昌 157 家客戶與業務資料庫，自動辨識客戶全名、縮寫與商標簡稱，並自動編碼為客戶編號（如 CA0001、CD0006）',
+    category: '客戶',
+    source: 'builtin',
+    regex: CUSTOMER_REGEX_SOURCE,
+    flags: 'giu',
+    example: 'Grainger、Apex Tool Group、Bunnings、Home Depot、Harbor Freight、Milwaukee、Wera、FACOM',
+    enabled: true,
+    validate: (match: string) => {
+      const cust = findCustomerByAlias(match);
+      return Boolean(cust);
+    },
+    getCustomCode: (match: string) => {
+      const cust = findCustomerByAlias(match);
+      return cust?.code;
+    },
+  },
   {
     id: 'zh-name',
     name: '中文姓名',
