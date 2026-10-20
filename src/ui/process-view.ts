@@ -759,7 +759,9 @@ function renderPreview(preview: HTMLElement, refresh: () => void, root: HTMLElem
       refresh();
     },
   });
-  preview.onmouseup = () => handleSelection(preview, refresh, root);
+  const onSelectEnd = () => handleSelection(preview, refresh, root);
+  preview.onmouseup = onSelectEnd;
+  preview.onkeyup = onSelectEnd;
   preview.onclick = (e) => {
     const target = (e.target as Element | null)?.closest<HTMLElement>('[data-id]');
     if (!target || !preview.contains(target)) return;

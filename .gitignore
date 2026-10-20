@@ -5,3 +5,5 @@ dist
 
 work/
 venv/
+*分享包*
+*.zip
