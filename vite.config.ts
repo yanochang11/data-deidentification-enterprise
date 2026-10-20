@@ -93,6 +93,13 @@ function ocrAssets(): Plugin {
 
 export default defineConfig({
   base: './',
+  server: {
+    port: 5173,
+    strictPort: false,
+    watch: {
+      ignored: ['**/venv/**', '**/*.xlsx', '**/*.docx', '**/*.pdf', '**/*_temp.html', '**/work/**'],
+    },
+  },
   plugins: [buildDate(), llmsFull(), ocrAssets()],
   build: {
     target: 'es2022',
