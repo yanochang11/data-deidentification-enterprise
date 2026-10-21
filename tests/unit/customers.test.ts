@@ -83,4 +83,19 @@ describe('明昌企業客戶辨識與自動客戶編碼 (157 家對照表)', () 
     const result = applyRedactions(text, items, 'label');
     expect(result.redactedText).toBe('採購商：[客戶]，確認無誤。');
   });
+
+  it('automatically detects unlisted customer names via context labels and masks them cleanly', () => {
+    const text = '客戶名稱：宏盛精密工業股份有限公司\n買受人：David Miller\nCustomer Name: Nordic Hardware Group AB';
+    const items = detect(text, BUILTIN_PATTERNS);
+    const customerItems = items.filter((it) => it.category === '客戶').map((it) => it.original);
+
+    expect(customerItems).toEqual([
+      '宏盛精密工業股份有限公司',
+      'David Miller',
+      'Nordic Hardware Group AB',
+    ]);
+
+    const labelRedacted = applyRedactions(text, items, 'label');
+    expect(labelRedacted.redactedText).toBe('客戶名稱：[客戶]\n買受人：[客戶]\nCustomer Name: [客戶]');
+  });
 });

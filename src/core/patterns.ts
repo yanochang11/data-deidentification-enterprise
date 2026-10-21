@@ -37,7 +37,12 @@ const BIRTH_DATE =
   `|\\d{1,2}(?:st|nd|rd|th)?\\x20+${MONTH}\\.?,?\\x20+\\d{4})`;
 
 /** Organisation suffixes that reliably end a company name; bare 公司 is too ambiguous (本公司, 公司電話). */
-const COMPANY_SUFFIX = '(?:股份有限公司|有限公司|無限公司|兩合公司|企業社|工作室|事務所|商行|診所|基金會|協會|合作社|工程行|企業行|實業社|文化事業)';
+const COMPANY_SUFFIX =
+  '(?:股份有限公司|有限公司|無限公司|兩合公司|' +
+  '企業社|工作室|事務所|商行|診所|基金會|協會|合作社|工程行|企業行|實業社|文化事業|' +
+  '集團|控股|科技公司|實業公司|工業公司|貿易公司|資訊公司|國際公司|電子公司|精密公司|' +
+  '工程公司|設備公司|機器公司|機械公司|化工公司|製藥公司|生技公司|物流公司|顧問公司|' +
+  '投資公司|開發公司|控股公司|服務公司|企業公司|商社|工廠)';
 /** Characters that never start a company name but often precede one in prose. */
 const COMPANY_NOT_FIRST = '的與和及於在由向從為對將把讓依據至到給經受同各該本貴我敝此其係即為者以並或如';
 const COMPANY_REGEX = `(?:(?![${COMPANY_NOT_FIRST}])[${CJK}A-Za-z0-9&·]){2,14}?${COMPANY_SUFFIX}`;
@@ -84,6 +89,8 @@ const NAME_STOPLIST = new Set([
   '方為', '牛市', '包商', '向下', '向上', '任一', '安全', '安裝', '安排',
   '程師', // 工程師
   '簡訊', '向本', // 手機簡訊、向本會／本公司申請
+  '高強', '高品', '高階', '高低', '高達', '高壓', '高抗',
+  '易港', '易交', '港區', '交期', '強度', '條款',
 ]);
 
 /** "X方" in contracts/legal text (甲方、乙方、雙方、他方…) is a party, not a person surnamed 方. */
@@ -91,11 +98,60 @@ const PARTY_PREFIX = /[甲乙丙丁雙各買賣我他貴對本該多官軍校院
 
 function isPlausibleName(m: string, before = ''): boolean {
   if (NAME_STOPLIST.has(m.slice(0, 2))) return false;
+  if (m.length >= 3 && NAME_STOPLIST.has(m.slice(1, 3))) return false;
   if (/(.)\1/.test(m) && m.length === 2) return false;
   if (m.startsWith('方') && PARTY_PREFIX.test(before)) return false;
   if (m.startsWith('何') && /[任如為幾若奈無]$/u.test(before)) return false; // 任何、如何、幾何…
+  if (m.startsWith('易') && /[貿簡變平通輕交易]$/u.test(before)) return false; // 貿易港區、交易交期…
+  if (m.startsWith('金') && /[訂定押獎薪佣酬基保現稅租資金定退補款本母美黃白黑]$/u.test(before)) return false; // 訂金後、租金等…
   return true;
 }
+
+/** Customer Context Labels in enterprise business docs / POs / Quotations / Invoices. */
+const CUSTOMER_LABEL =
+  '(?:客戶(?:名稱|全名|簡稱|抬頭|公司)?' +
+  '|買受人(?:全名|名稱|抬頭|公司)?' +
+  '|買受客戶|買受單位' +
+  '|買方(?:全名|名稱|客戶|公司)?' +
+  '|終端(?:專案)?客戶|專案客戶|合作客戶|合作採購單位|合作單位' +
+  '|採購單位|採購客戶|採購商|採購方' +
+  '|訂購人|訂購單位|訂購客戶|訂購廠商' +
+  '|委託人|委託單位|委託客戶|往來客戶|合約客戶|收貨人|受貨人|發票抬頭' +
+  '|[Cc]ustomer(?:\\s*(?:[Nn]ame|[Aa]ccount))?' +
+  '|[Cc]lient(?:\\s*[Nn]ame)?|[Bb]uyer(?:\\s*[Nn]ame)?|[Pp]urchaser(?:\\s*[Nn]ame)?' +
+  '|[Ss]old\\s*[Tt]o|[Bb]ill\\s*[Tt]o|[Ss]hip\\s*[Tt]o|[Cc]onsignee|[Aa]ccount\\s*[Nn]ame)';
+
+const CONTEXTUAL_CUSTOMER_REGEX =
+  `(?<=${CUSTOMER_LABEL}[\\x20\\t]*[:：][\\x20\\t]*)` +
+  `[${CJK}A-Za-z0-9&·][${CJK}A-Za-z0-9&·.,'\\-\\x20]{1,59}?(?=[\\r\\n，;；()（）\\[\\]【】{}|]|\\x20+[(（]|$)`;
+
+const INTL_COMPANY_SUFFIX =
+  '(?:(?:Group|Holdings?|Enterprises?|Industries?|Technologies?|Solutions?|Systems?)(?:,?\\s*(?:Inc\\.?|Incorporated|LLC|L\\.L\\.C\\.|Ltd\\.?|Limited|Corp\\.?|Corporation|Co\\.,?\\s*Ltd\\.?|Co\\.|GmbH|AG|S\\.p\\.A\\.?|B\\.V\\.?|S\\.A\\.?|Pty\\.?\\s*Ltd\\.?|Pte\\.?\\s*Ltd\\.?|SDN\\.?\\s*BHD\\.?|SE|Plc|LLP|LP))?|Inc\\.?|Incorporated|LLC|L\\.L\\.C\\.|Ltd\\.?|Limited|Corp\\.?|Corporation|Co\\.,?\\s*Ltd\\.?|Co\\.|GmbH|AG|S\\.p\\.A\\.?|B\\.V\\.?|S\\.A\\.?|Pty\\.?\\s*Ltd\\.?|Pte\\.?\\s*Ltd\\.?|SDN\\.?\\s*BHD\\.?|SE|Plc|LLP|LP)';
+
+const INTL_COMPANY_REGEX =
+  `(?<![A-Za-z0-9])` +
+  `(?:` +
+  `[A-Z][A-Za-z0-9&·\\s.,'\\-]{1,45}?\\b${INTL_COMPANY_SUFFIX}(?![A-Za-z0-9])` +
+  `|` +
+  `[A-Z][A-Za-z0-9.'\\-]{1,20}(?:\\x20+[A-Z][A-Za-z0-9.'\\-]{1,20})*\\x20+(?:&|and)\\x20+[A-Z][A-Za-z0-9.'\\-]{1,20}(?:\\x20+(?:Decker|Holdings?|Group|Enterprises?|Solutions?|Systems?|Technologies?|Tools?|Industries?|Trading|Services?|International))?` +
+  `)`;
+
+const EN_NAME_REGEX =
+  '(?<![A-Za-z0-9])' +
+  '[A-Z][a-z]{1,16}(?:\\x20+[A-Z]\\.?)?\\x20+[A-Z][a-z]{1,16}' +
+  '(?![A-Za-z0-9])';
+
+const EN_NAME_STOPLIST = new Set([
+  'Home Depot', 'Black Decker', 'Stanley Black', 'Tool Group', 'Apex Tool',
+  'Air Freight', 'Purchase Order', 'Sales Order', 'Total Amount', 'United States',
+  'New York', 'North America', 'South America', 'High Quality', 'Heavy Duty',
+  'ISO Certified', 'Terms Conditions', 'Packing List', 'Incoterms 2020',
+  'Taiwan R.O.C.', 'Payment Terms', 'Delivery Terms', 'General Manager',
+  'Product Development', 'Customer Service', 'Quality Assurance',
+  'Invoice Date', 'Support Desk', 'Help Desk', 'Access Log', 'Tokyo Branch',
+  'Tokyo branch', 'Credit Card', 'Debit Card', 'Customer Account', 'Due Date',
+  'Billing Address', 'Shipping Address', 'Second Contact', 'Second contact',
+]);
 
 export const BUILTIN_PATTERNS: Pattern[] = [
   {
@@ -110,11 +166,37 @@ export const BUILTIN_PATTERNS: Pattern[] = [
     example: 'Grainger、Apex Tool Group、Bunnings、Home Depot、Harbor Freight、Milwaukee、Wera、FACOM',
     enabled: true,
     validate: (match: string) => {
+
       const cust = findCustomerByAlias(match);
       return Boolean(cust);
     },
     getCustomCode: (match: string) => {
       const cust = findCustomerByAlias(match);
+      return cust?.code;
+    },
+  },
+  {
+    id: 'contextual-customer',
+    name: '客戶名稱（文脈與欄位自動判定）',
+    group: 'tw',
+    note: '自動辨識「客戶／買受人／買方／終端客戶／採購單位／Customer／Client」等欄位或文脈標籤後之公司名稱、姓名或組織',
+    category: '客戶',
+    source: 'builtin',
+    regex: CONTEXTUAL_CUSTOMER_REGEX,
+    flags: 'gu',
+    example: '買受人全名：Grainger International Inc.、客戶名稱：台塑石化、Customer: Stanley Black & Decker、客戶：王小明',
+    enabled: true,
+    validate: (match: string) => {
+      const trimmed = match.trim().replace(/[\s,，;；。]+$/, '');
+      if (trimmed.length < 2) return false;
+      if (/^(?:無|同上|詳見附件|如前述|不適用|N\/A|None|Nil)$/i.test(trimmed)) return false;
+      if (/^(?:本單|僅供|僅限|限|適用於|須由|如前述|依據)/.test(trimmed)) return false;
+      if (/(?:專案專用|排產結關|不可撤銷|另行約定|付清|付訖|確認無誤|請參照)/.test(trimmed)) return false;
+      if (!/[A-Za-z\u4e00-\u9fa5]/.test(trimmed)) return false;
+      return trimmed.length;
+    },
+    getCustomCode: (match: string) => {
+      const cust = findCustomerByAlias(match.trim().replace(/[\s,，;；.。]+$/, ''));
       return cust?.code;
     },
   },
@@ -218,6 +300,45 @@ export const BUILTIN_PATTERNS: Pattern[] = [
     example: '統一編號 04595257',
     enabled: true,
     validate: isValidTaxId,
+  },
+  {
+    id: 'intl-company',
+    name: '國際／外商企業名稱',
+    group: 'intl',
+    note: '以 Inc.、LLC、Ltd.、Corp.、Co.、GmbH、AG 等組織型態結尾，或知名跨國企業聯名商標',
+    category: '公司',
+    source: 'builtin',
+    regex: INTL_COMPANY_REGEX,
+    flags: 'gu',
+    example: 'Grainger International Inc.、Apex Tool Group, LLC、Bosch GmbH、Stanley Black & Decker',
+    enabled: true,
+    validate: (match: string) => {
+      const trimmed = match.trim().replace(/[\s,，;；。]+$/, '');
+      if (trimmed.length < 3) return false;
+      return trimmed.length;
+    },
+    getCustomCode: (match: string) => {
+      const cust = findCustomerByAlias(match.trim().replace(/[\s,，;；.。]+$/, ''));
+      return cust?.code;
+    },
+  },
+  {
+    id: 'en-name',
+    name: '英文姓名',
+    group: 'intl',
+    note: '標準英文姓名（名＋姓，如 David Miller、Elliott Chang），排除商務名詞與專有名詞',
+    category: '姓名',
+    source: 'builtin',
+    regex: EN_NAME_REGEX,
+    flags: 'gu',
+    example: 'David Miller、Elliott Chang、John Smith',
+    enabled: true,
+    validate: (match: string) => {
+      if (EN_NAME_STOPLIST.has(match)) return false;
+      const nonNameWords = /^(?:customer|name|client|buyer|purchaser|account|order|invoice|total|amount|billing|shipping|delivery|payment|terms|conditions|support|desk|service|product|quality|general|manager|director|department|company|corporation|enterprise|industrial|international|hardware|software|system|solution|technology|tool|tools|cabinet|steel|heavy|duty|high|low|first|second|third|contact|phone|mobile|email|address|office|branch|tokyo|london|taiwan|united|north|south|east|west|central|access|log|router|record|ticket|reference|number|date|time|subject|dear|thanks|best|regards|sincerely|january|february|march|april|june|july|august|september|october|november|december)$/i;
+      if (match.split(/\s+/).some((w) => nonNameWords.test(w.replace(/\.$/, '')))) return false;
+      return true;
+    },
   },
   {
     id: 'email',

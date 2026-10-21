@@ -49,6 +49,27 @@ describe('tw-company pattern', () => {
   it('does not match the suffix alone with no name before it', () => {
     expect(matches('tw-company', '有限公司')).toEqual([]);
   });
+
+  it('matches expanded company suffixes such as 集團, 控股, 商社, 工廠, 科技公司', () => {
+    expect(matches('tw-company', '台塑企業集團')).toEqual(['台塑企業集團']);
+    expect(matches('tw-company', '遠東新世紀控股')).toEqual(['遠東新世紀控股']);
+    expect(matches('tw-company', '伊藤忠商社')).toEqual(['伊藤忠商社']);
+    expect(matches('tw-company', '宏昌精密機械工廠')).toEqual(['宏昌精密機械工廠']);
+    expect(matches('tw-company', '瑞昱半導體科技公司')).toEqual(['瑞昱半導體科技公司']);
+  });
+});
+
+describe('intl-company pattern', () => {
+  it('matches international company names with legal suffixes (Inc., LLC, GmbH, Co., Ltd.)', () => {
+    expect(matches('intl-company', 'Acme Industrial Corp.')).toEqual(['Acme Industrial Corp.']);
+    expect(matches('intl-company', 'Pacific Tooling Solutions, LLC')).toEqual(['Pacific Tooling Solutions, LLC']);
+    expect(matches('intl-company', 'Bosch Rexroth AG')).toEqual(['Bosch Rexroth AG']);
+    expect(matches('intl-company', 'Nippon Steel Co., Ltd.')).toEqual(['Nippon Steel Co., Ltd.']);
+  });
+
+  it('does not match ordinary English words without company suffixes', () => {
+    expect(matches('intl-company', 'High Quality Steel Cabinet')).toEqual([]);
+  });
 });
 
 describe('tw-tax-id pattern', () => {

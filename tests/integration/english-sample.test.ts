@@ -12,6 +12,7 @@ const text = readFileSync('tests/fixtures/english-sample.txt', 'utf8');
 
 /** Everything the sample holds that the rules should find (English names and addresses are layer 2). */
 const EXPECTED: [string, string][] = [
+  ['客戶', 'Emily Carter'],
   ['生日', 'March 14, 1985'],
   ['SSN', '219-09-9999'],
   ['電子郵件', 'emily.carter@example.com'],
@@ -23,6 +24,7 @@ const EXPECTED: [string, string][] = [
   ['信用卡', '3782 822463 10005'],
   ['IBAN', 'GB82 WEST 1234 5698 7654 32'],
   ['IBAN', 'DE89370400440532013000'],
+  ['姓名', 'Daniel Kim'],
   ['生日', '07/04/1990'],
   ['國際電話', '415-555-0123'],
   ['手機', '0912-345-678'],

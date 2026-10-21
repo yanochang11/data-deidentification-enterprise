@@ -3,7 +3,8 @@ import type { Category } from './types';
 export const COMPOUND_SURNAMES = ['歐陽', '司馬', '諸葛', '上官', '張簡', '范姜', '司徒', '東方', '令狐', '南宮', '端木', '皇甫', '尉遲', '夏侯'];
 
 /** Company name split into (first two chars)(middle)(organisation suffix); shared with the preview-style retention. */
-export const COMPANY_MASK_RE = /^(.{2})(.*?)(股份有限公司|有限公司|無限公司|兩合公司|企業社|工作室|事務所|商行|診所|基金會|協會|合作社|工程行|企業行|實業社|文化事業)$/u;
+export const COMPANY_MASK_RE =
+  /^(.{2})(.*?)(股份有限公司|有限公司|無限公司|兩合公司|企業社|工作室|事務所|商行|診所|基金會|協會|合作社|工程行|企業行|實業社|文化事業|集團|控股|科技公司|實業公司|工業公司|貿易公司|資訊公司|國際公司|電子公司|精密公司|工程公司|設備公司|機器公司|機械公司|化工公司|製藥公司|生技公司|物流公司|顧問公司|投資公司|開發公司|控股公司|服務公司|企業公司|商社|工廠)$/u;
 
 function keepEnds(s: string, head: number, tail: number, fill = '*'): string {
   if (s.length <= head + tail) return fill.repeat(s.length);
@@ -16,7 +17,18 @@ function keepEnds(s: string, head: number, tail: number, fill = '*'): string {
  */
 export function maskDisplay(category: Category, original: string): string {
   switch (category) {
+    case '客戶': {
+      const trimmed = original.trim();
+      return keepEnds(trimmed, 2, 0);
+    }
     case '姓名': {
+      if (/^[A-Za-z\s.'-]+$/.test(original.trim())) {
+        const parts = original.trim().split(/\s+/);
+        if (parts.length >= 2) {
+          return parts.map((p) => p[0] + '*'.repeat(Math.max(1, p.length - 1))).join(' ');
+        }
+        return keepEnds(original, 1, 0);
+      }
       const surnameLen = COMPOUND_SURNAMES.some((s) => original.startsWith(s)) ? 2 : 1;
       if (original.length <= surnameLen) return 'O'.repeat(Math.max(2, original.length));
       return original.slice(0, surnameLen) + 'O'.repeat(original.length - surnameLen);

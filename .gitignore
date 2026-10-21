@@ -4,6 +4,8 @@ dist
 *.local
 
 work/
+scratch/
+測試用/*.deid*
 venv/
 *分享包*
 *.zip

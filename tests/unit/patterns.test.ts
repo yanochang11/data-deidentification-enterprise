@@ -203,4 +203,21 @@ describe('zh-name pattern', () => {
   it('does not match "任何人"', () => {
     expect(matches('zh-name', '任何人')).toEqual([]);
   });
+
+  it('does not misclassify quotation/commercial terms (高強度, 貿易港區, 交易交期, 定金後) as names', () => {
+    expect(matches('zh-name', '採用高強度鋼材，於自由貿易港區交貨，交易交期為收到定金後 45 天。')).toEqual([]);
+  });
+});
+
+describe('en-name pattern', () => {
+  it('matches standard English full names', () => {
+    expect(matches('en-name', 'Contact: David Miller and Elliott Chang')).toEqual([
+      'David Miller',
+      'Elliott Chang',
+    ]);
+  });
+
+  it('does not match common commercial phrases or headers', () => {
+    expect(matches('en-name', 'Purchase Order, Total Amount, Support Desk, Heavy Duty')).toEqual([]);
+  });
 });
