@@ -60,7 +60,7 @@ async function textLayer(page: PDFPageProxy): Promise<PdfPage> {
   for (const raw of content.items) {
     if (!('str' in raw)) continue;
     const it = raw as TextItem;
-    items.push({ text: it.str, x: it.transform[4] - x0, y: it.transform[5] - y0, fontSize: fontSizeOf(it), width: it.width, eol: it.hasEOL });
+    items.push({ text: it.str.replace(/[\u2e80-\u2fdf\uf900-\ufaff]/g, (c) => { const n = c.normalize('NFKC'); return n.length === 1 ? n : c; }), x: it.transform[4] - x0, y: it.transform[5] - y0, fontSize: fontSizeOf(it), width: it.width, eol: it.hasEOL });
   }
   return { width: x1 - x0, height: y1 - y0, items };
 }

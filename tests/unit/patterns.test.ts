@@ -207,17 +207,35 @@ describe('zh-name pattern', () => {
   it('does not misclassify quotation/commercial terms (高強度, 貿易港區, 交易交期, 定金後) as names', () => {
     expect(matches('zh-name', '採用高強度鋼材，於自由貿易港區交貨，交易交期為收到定金後 45 天。')).toEqual([]);
   });
+
+  it('does not misclassify contract words (簡報, 違反方除須, 過程中, 曾獲得, 連絡人) while keeping real names', () => {
+    const contractSnippet =
+      '教育訓練課程與簡報、違反方除須自負法律責任外，執行過程中，曾獲得補助。計畫連絡人：張詠翔、郭守軒、林欣宜、張庭維、許勝雄';
+    expect(matches('zh-name', contractSnippet)).toEqual([
+      '張詠翔',
+      '郭守軒',
+      '林欣宜',
+      '張庭維',
+      '許勝雄',
+    ]);
+  });
 });
 
 describe('en-name pattern', () => {
-  it('matches standard English full names', () => {
-    expect(matches('en-name', 'Contact: David Miller and Elliott Chang')).toEqual([
-      'David Miller',
-      'Elliott Chang',
+  it('matches standard English full names and romanized Asian names', () => {
+    expect(
+      matches('en-name', 'Contact: David Miller, Elliott Chang, Bryan Long, Claire Pirie, Daniel Kim'),
+    ).toEqual(['David Miller', 'Elliott Chang', 'Bryan Long', 'Claire Pirie', 'Daniel Kim']);
+  });
+
+  it('matches uncommon names when preceded by an honorific or contact label', () => {
+    expect(matches('en-name', 'Signed by: Kaito Tanaka and Mr. Soren Lindqvist')).toEqual([
+      'Kaito Tanaka',
+      'Soren Lindqvist',
     ]);
   });
 
-  it('does not match common commercial phrases or headers', () => {
-    expect(matches('en-name', 'Purchase Order, Total Amount, Support Desk, Heavy Duty')).toEqual([]);
+  it('does not match common commercial phrases, ledger headers, or industrial company words', () => {
+    expect(matches('en-name', 'SUK Sales Ledger Aged Debtors Report, Age Against: Transaction Date, Tran Type, Days From, Credit Note, Purchase Order, Total Amount, Support Desk, Heavy Duty, Calibration Engineering, Body Factors')).toEqual([]);
   });
 });

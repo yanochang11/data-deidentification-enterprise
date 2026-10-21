@@ -56,17 +56,18 @@ const NAME_FOLLOW =
   '(?=$|[\\s\\d\\p{P}A-Za-z]|先生|小姐|女士|同學|醫師|醫生|護理師|老師|律師|經理|主任|董事|總監|組長|課長|科長|處長|局長|部長|教授|博士|君|兄|姐|哥|等|表示|說|指出|認為|於|在|與|和|及|為|所|之|的|已|將|曾|因|向|由|係|即|亦|並|或' +
   '|另|也|則|更|未|不|有|無|是|非|對|從|自|以|被|經|卻|還|又|再|但|而|才|都|皆|均|便|就|會|能|可|應|須|要|想|願|正|到|來|去|至|提|收|付|持|稱|同意|聲明|陳述|申請|提供|前往|出席|簽|辦理|負責|擔任|購買|支付|領取|遞交|回覆|聯絡|通知|告知)';
 
-/** Characters that essentially never appear inside a given name; used by the fallback branch below. */
+/** Characters that essentially never appear inside a given name; used by both branches below. */
 const NAME_STOP_CHARS =
-  '的了是在有和與及於為等所之已將因向由係即亦並或另也則未不無非對從自以被經卻還又再但而才都皆均便就會能可應須要想願到來去至收付持稱接提說表指認出簽辦負擔購支領遞回聯通告這那該此其每各們呢嗎吧啊麼什怎很太最曾先女士請讓使給把被令將於當若如則個';
+  '的了是在有和與及於為等所之已將因向由係即亦並或另也則未不無非對從自以被經卻還又再但而才都皆均便就會能可應須要想願到來去至收付持稱接提說表指認出簽辦負擔購支領遞回聯通告這那該此其每各們呢嗎吧啊麼什怎很太最曾先女請讓使給把令當若個' +
+  '除獲可得中後前內外上下左右人者員方師商廠處室部課科組會局署院所館店行社站場區市縣鄉鎮村里路街段巷弄號樓書表單函件案費金款稅價率度量數期日月年時分秒次項條目節章頁式法制權力性化業物料器具機車櫃箱盒盤架報絡連';
 
 /**
- * Branch 1: 1–2 name chars followed by a known context word (precise for 2-vs-3 char names).
- * Branch 2: exactly 2 name chars that are not function words (recall when the next word is unknown).
+ * Branch 1: 1–2 name chars (excluding stop chars) followed by a known context word (precise for 2-vs-3 char names).
+ * Branch 2: exactly 2 name chars that are not function/stop words (recall when the next word is unknown).
  */
 const NAME_REGEX =
   `(?:${COMPOUND_SURNAMES}|[${SINGLE_SURNAMES}])` +
-  `(?:[${CJK}]{1,2}${NAME_FOLLOW}|(?:(?![${NAME_STOP_CHARS}])[${CJK}]){2})`;
+  `(?:(?:(?![${NAME_STOP_CHARS}])[${CJK}]){1,2}${NAME_FOLLOW}|(?:(?![${NAME_STOP_CHARS}])[${CJK}]){2})`;
 
 /** Common words that start with a surname character but are not names. */
 const NAME_STOPLIST = new Set([
@@ -81,20 +82,22 @@ const NAME_STOPLIST = new Set([
   '柳樹', '錢包', '甘心', '秦朝', '官方', '官員', '易於', '祝福', '喬木', '向來', '凌晨', '舒服', '包含',
   '包括', '包裝', '鮑魚', '牛肉', '牛奶', '管理', '毛巾', '柯南', '翁婿', '魏晉', '孫子', '戴上', '范圍',
   '宋朝', '杜絕', '侯爵', '曹操', '丁點', '卓越', '馬克', '董事', '藍圖', '蔣公', '石膏', '鄧小', '傅立',
-  '梁柱', '趙錢', '顏色', '簡單', '簡介', '簡稱', '朱紅', '鍾情', '游泳', '游戲', '詹姆', '胡說', '胡椒',
+  '梁柱', '趙錢', '顏色', '簡單', '簡介', '簡稱', '簡報', '簡章', '簡表', '簡歷', '簡要', '簡化', '簡潔',
+  '簡述', '簡析', '簡明', '簡略', '簡直', '朱紅', '鍾情', '游泳', '游戲', '詹姆', '胡說', '胡椒',
   '沈默', '盧比', '呂宋', '江西', '何必', '蕭條', '羅馬', '羅列', '高雄', '潘朵', '莊園', '蘇打', '葉子',
   '徐徐', '廖化', '賴床', '曾經', '洪水', '郭台', '謝謝', '鄭重', '許願', '蔡英', '劉海', '吳哥', '楊桃',
-  '張三', '李四', '王五', '謝絕', '謝意', '許久', '賴以', '曾任', '洪流', '邱比', '徐步', '廖若', '莊嚴',
+  '張三', '李四', '王五', '謝絕', '謝意', '許久', '賴以', '曾任', '曾獲', '曾得', '曾有', '曾為', '曾於',
+  '曾在', '曾被', '曾由', '曾向', '曾與', '曾因', '曾是', '洪流', '邱比', '徐步', '廖若', '莊嚴',
   '管轄', '管制', '管線', '管道', '管控', '溫濕', '溫馨', '溫室', '何疑', '易雙', '謝您', '謝函', '謝禮', '高層', '高額',
-  '方為', '牛市', '包商', '向下', '向上', '任一', '安全', '安裝', '安排',
-  '程師', // 工程師
+  '方為', '方除', '牛市', '包商', '向下', '向上', '任一', '安全', '安裝', '安排',
+  '程師', '程中', '程序', // 工程師、過程中、程序
   '簡訊', '向本', // 手機簡訊、向本會／本公司申請
   '高強', '高品', '高階', '高低', '高達', '高壓', '高抗',
-  '易港', '易交', '港區', '交期', '強度', '條款',
+  '易港', '易交', '港區', '交期', '強度', '條款', '連絡', '聯絡',
 ]);
 
-/** "X方" in contracts/legal text (甲方、乙方、雙方、他方…) is a party, not a person surnamed 方. */
-const PARTY_PREFIX = /[甲乙丙丁雙各買賣我他貴對本該多官軍校院廠資勞前後男女一二三四五六七八九十任另每]$/u;
+/** "X方" in contracts/legal text (甲方、乙方、雙方、他方、違反方…) is a party, not a person surnamed 方. */
+const PARTY_PREFIX = /[甲乙丙丁雙各買賣我他貴對本該多官軍校院廠資勞前後男女一二三四五六七八九十任另每反]$/u;
 
 function isPlausibleName(m: string, before = ''): boolean {
   if (NAME_STOPLIST.has(m.slice(0, 2))) return false;
@@ -104,6 +107,8 @@ function isPlausibleName(m: string, before = ''): boolean {
   if (m.startsWith('何') && /[任如為幾若奈無]$/u.test(before)) return false; // 任何、如何、幾何…
   if (m.startsWith('易') && /[貿簡變平通輕交易]$/u.test(before)) return false; // 貿易港區、交易交期…
   if (m.startsWith('金') && /[訂定押獎薪佣酬基保現稅租資金定退補款本母美黃白黑]$/u.test(before)) return false; // 訂金後、租金等…
+  if (m.startsWith('程') && /[過流課章排時工議規遠前途旅學療]$/u.test(before)) return false; // 過程中、流程、工程…
+  if (m.startsWith('連') && /[合約毗接相牽勾串一]$/u.test(before)) return false; // 一連、相連…
   return true;
 }
 
@@ -138,20 +143,274 @@ const INTL_COMPANY_REGEX =
 
 const EN_NAME_REGEX =
   '(?<![A-Za-z0-9])' +
-  '[A-Z][a-z]{1,16}(?:\\x20+[A-Z]\\.?)?\\x20+[A-Z][a-z]{1,16}' +
+  '[A-Z][a-z]{1,16}(?:\\x20+[A-Z]\\.?)?\\x20+(?:(?:Mc|Mac|O\')[A-Z][a-z]{1,14}|[A-Z][a-z]{1,16}(?:-[A-Z][a-z]{1,16})?)' +
   '(?![A-Za-z0-9])';
 
-const EN_NAME_STOPLIST = new Set([
-  'Home Depot', 'Black Decker', 'Stanley Black', 'Tool Group', 'Apex Tool',
-  'Air Freight', 'Purchase Order', 'Sales Order', 'Total Amount', 'United States',
-  'New York', 'North America', 'South America', 'High Quality', 'Heavy Duty',
-  'ISO Certified', 'Terms Conditions', 'Packing List', 'Incoterms 2020',
-  'Taiwan R.O.C.', 'Payment Terms', 'Delivery Terms', 'General Manager',
-  'Product Development', 'Customer Service', 'Quality Assurance',
-  'Invoice Date', 'Support Desk', 'Help Desk', 'Access Log', 'Tokyo Branch',
-  'Tokyo branch', 'Credit Card', 'Debit Card', 'Customer Account', 'Due Date',
-  'Billing Address', 'Shipping Address', 'Second Contact', 'Second contact',
+/** Common English first names (given names) to prevent matching arbitrary Title-Case business phrases (e.g. Sales Ledger, Aged Debtors). */
+const EN_GIVEN_NAMES = new Set([
+  'aaron', 'abigail', 'adam', 'adrian', 'aidan', 'alan', 'albert', 'alec', 'alex', 'alexander',
+  'alexandra', 'alexis', 'alfred', 'alice', 'alicia', 'alison', 'allan', 'allen', 'allison', 'alyssa',
+  'amanda', 'amber', 'amelia', 'amy', 'andrea', 'andrew', 'andy', 'angel', 'angela', 'angie',
+  'anita', 'ann', 'anna', 'anne', 'annette', 'annie', 'anthony', 'antonio', 'april', 'archie',
+  'ariel', 'arnold', 'arthur', 'ashley', 'AUDREY'.toLowerCase(), 'austin', 'ava', 'barbara', 'barry', 'beatrice',
+  'becky', 'belinda', 'ben', 'benjamin', 'bernard', 'bernice', 'bertha', 'bessie', 'beth', 'betty',
+  'beverly', 'bill', 'billy', 'blake', 'bob', 'bobby', 'bonnie', 'brad', 'bradley', 'brandon',
+  'brenda', 'brent', 'brett', 'brian', 'brianna', 'bridget', 'brittany', 'brooke', 'bruce', 'bryan',
+  'bryce', 'byron', 'caleb', 'callum', 'calvin', 'cameron', 'camilla', 'candice', 'carl', 'carla',
+  'carlos', 'carmen', 'carol', 'carole', 'caroline', 'carolyn', 'carrie', 'carter', 'casey', 'cassandra',
+  'catherine', 'cathy', 'cecil', 'cecilia', 'cedric', 'celia', 'chad', 'charles', 'charlie', 'charlotte',
+  'chase', 'chelsea', 'cheryl', 'chester', 'chloe', 'chris', 'christian', 'christina', 'christine', 'christopher',
+  'cindy', 'claire', 'clara', 'clarence', 'clark', 'claude', 'claudia', 'clayton', 'cliff', 'clifford',
+  'clint', 'clinton', 'clive', 'clyde', 'cody', 'colin', 'colleen', 'connie', 'connor', 'CONSTANCE'.toLowerCase(),
+  'corey', 'corinne', 'cory', 'courtney', 'craig', 'crystal', 'curtis', 'cynthia', 'cyril', 'daisy',
+  'dale', 'dallas', 'damian', 'damon', 'dan', 'dana', 'daniel', 'danielle', 'danny', 'daphne',
+  'darlene', 'darren', 'darryl', 'daryl', 'dave', 'david', 'dawn', 'dean', 'debbie', 'deborah',
+  'debra', 'declan', 'deirdre', 'delia', 'denis', 'denise', 'dennis', 'derek', 'derrick', 'desmond',
+  'devin', 'devon', 'diana', 'diane', 'dianne', 'dick', 'diego', 'dillon', 'dolores', 'dominic',
+  'don', 'donald', 'donna', 'donovan', 'dora', 'doreen', 'doris', 'dorothy', 'doug', 'douglas',
+  'drew', 'duane', 'duncan', 'dustin', 'wayne', 'dwight', 'dylan', 'earl', 'ed', 'eddie',
+  'edgar', 'edith', 'edmond', 'edmund', 'edna', 'eduardo', 'edward', 'edwin', 'eileen', 'elaine',
+  'eleanor', 'elena', 'eli', 'elijah', 'elisa', 'elisabeth', 'elise', 'eliza', 'elizabeth', 'ella',
+  'ellen', 'elliot', 'elliott', 'ellis', 'elmer', 'eloise', 'elsa', 'elsie', 'elvin', 'elvis',
+  'emanuel', 'emerson', 'emil', 'emily', 'emma', 'emmanuel', 'eric', 'erica', 'erick', 'erik',
+  'erika', 'erin', 'ernest', 'ernie', 'errol', 'estelle', 'esther', 'ethan', 'ethel', 'eugene',
+  'eunice', 'eva', 'evan', 'evelyn', 'everett', 'faith', 'faye', 'felicia', 'felix', 'fernando',
+  'fiona', 'florence', 'floyd', 'frances', 'francis', 'francisco', 'frank', 'frankie', 'franklin', 'fred',
+  'freda', 'freddie', 'frederick', 'frida', 'gabriel', 'gabrielle', 'gail', 'garrett', 'garry', 'gary',
+  'gavin', 'gayle', 'gemma', 'gene', 'genevieve', 'geoff', 'geoffrey', 'george', 'georgia', 'georgina',
+  'gerald', 'geraldine', 'gerard', 'gerry', 'gertrude', 'gilbert', 'giles', 'gill', 'gillian', 'gina',
+  'ginger', 'gloria', 'glenn', 'glyn', 'gordon', 'grace', 'graeme', 'graham', 'grant', 'greg',
+  'gregg', 'gregory', 'greta', 'gretchen', 'guy', 'gwen', 'gwendolyn', 'hailey', 'haley', 'hamish',
+  'hank', 'hanna', 'hannah', 'hans', 'harold', 'harriet', 'harrison', 'harry', 'harvey', 'hayden',
+  'hayley', 'hazel', 'heath', 'heather', 'hector', 'heidi', 'helen', 'helena', 'helene', 'henri',
+  'henry', 'herbert', 'herman', 'hilary', 'hilda', 'holly', 'homer', 'hope', 'horace', 'howard',
+  'hubert', 'ugh', 'hugh', 'hugo', 'hunter', 'ian', 'ida', 'ignacio', 'igor', 'ilona',
+  'imogen', 'inez', 'ingrid', 'irene', 'iris', 'irma', 'irving', 'irwin', 'isaac', 'isabel',
+  'isabella', 'isabelle', 'isaiah', 'ivan', 'ivy', 'jack', 'jackie', 'jackson', 'jacob', 'jacqueline',
+  'jacqui', 'jade', 'jake', 'james', 'jamie', 'jan', 'jane', 'janet', 'janice', 'janine',
+  'jared', 'jasmine', 'jason', 'jasper', 'javier', 'jay', 'jayden', 'jean', 'jeanette', 'jeanne',
+  'jeannette', 'jeff', 'jeffery', 'jeffrey', 'jen', 'jenna', 'jennifer', 'jenny', 'jeremy', 'jerome',
+  'jerry', 'jesse', 'jessica', 'jessie', 'jill', 'jillian', 'jim', 'jimmie', 'jimmy', 'jo',
+  'joan', 'joann', 'joanna', 'joanne', 'jocelyn', 'jodi', 'jodie', 'jody', 'joe', 'joel',
+  'joey', 'johann', 'johanna', 'john', 'johnathan', 'johnnie', 'johnny', 'jolene', 'jon', 'jonah',
+  'jonathan', 'jonathon', 'jordan', 'jorge', 'jose', 'josef', 'joseph', 'josephine', 'josh', 'joshua',
+  'josie', 'joy', 'joyce', 'juan', 'juanita', 'judith', 'judy', 'jules', 'julia', 'julian',
+  'juliana', 'julie', 'juliet', 'juliette', 'julio', 'julius', 'june', 'justin', 'justine', 'kaitlyn',
+  'karen', 'karin', 'karina', 'karl', 'karla', 'kate', 'katelyn', 'katherine', 'kathleen', 'kathryn',
+  'kathy', 'katie', 'katrina', 'kay', 'kayla', 'kayleigh', 'keith', 'kelly', 'kelsey', 'kelvin',
+  'ken', 'kendall', 'kendra', 'kenneth', 'kenny', 'kent', 'kerry', 'kevin', 'kim', 'kimberly',
+  'kirk', 'kirsten', 'kirsty', 'kit', 'kitty', 'klaus', 'krista', 'kristen', 'kristi', 'kristin',
+  'kristina', 'kristine', 'kristopher', 'kristy', 'kurt', 'kyle', 'kylie', 'lacey', 'lana', 'lance',
+  'lara', 'larry', 'laura', 'lauren', 'laurence', 'laurie', 'lawrence', 'lea', 'leah', 'leanne',
+  'lee', 'leigh', 'leila', 'leland', 'lena', 'lenny', 'leo', 'leon', 'leona', 'leonard',
+  'leonie', 'leroy', 'les', 'lesley', 'leslie', 'lester', 'leticia', 'lewis', 'liam', 'lillian',
+  'lillie', 'lilly', 'lily', 'linda', 'lindsay', 'lindsey', 'lionel', 'lisa', 'liz', 'liza',
+  'lizzie', 'lloyd', 'logan', 'lois', 'lola', 'lonnie', 'lora', 'loren', 'lorena', 'lorenzo',
+  'loretta', 'lori', 'lorna', 'lorraine', 'lou', 'louis', 'louisa', 'louise', 'lowell', 'lucas',
+  'lucia', 'lucille', 'lucinda', 'lucy', 'luis', 'luke', 'luther', 'lydia', 'lyle', 'lynda',
+  'lynette', 'lynn', 'lynne', 'mabel', 'mackenzie', 'maddie', 'madeleine', 'madeline', 'madison', 'mae',
+  'maggie', 'malcolm', 'mallory', 'mandy', 'manuel', 'marc', 'marcel', 'marcia', 'marco', 'marcos',
+  'marcus', 'margaret', 'margarita', 'margery', 'margie', 'margo', 'marguerite', 'maria', 'marian', 'marianne',
+  'marie', 'marilyn', 'marina', 'mario', 'marion', 'marisa', 'marissa', 'marjorie', 'mark', 'marlene',
+  'marlon', 'marsha', 'marshall', 'marta', 'martha', 'martin', 'martina', 'marty', 'marvin', 'mary',
+  'mason', 'mathew', 'matilda', 'matt', 'matthew', 'maureen', 'maurice', 'mavis', 'max', 'maxine',
+  'may', 'maya', 'megan', 'meghan', 'mel', 'melanie', 'melinda', 'melissa', 'melody', 'melvin',
+  'mercedes', 'meredith', 'merle', 'mervyn', 'mia', 'micaela', 'micah', 'michael', 'michaela', 'micheal',
+  'michel', 'michele', 'michelle', 'mick', 'mickey', 'miguel', 'mike', 'mildred', 'miles', 'millie',
+  'milton', 'mindy', 'minnie', 'miranda', 'miriam', 'misty', 'mitch', 'mitchell', 'moira', 'molly',
+  'mona', 'monica', 'monika', 'monique', 'monte', 'monty', 'morgan', 'morris', 'morton', 'muriel',
+  'murray', 'myles', 'myra', 'myrna', 'myron', 'myrtle', 'nadia', 'nadine', 'nan', 'nancy',
+  'naomi', 'natalia', 'natalie', 'natasha', 'nathan', 'nathaniel', 'neal', 'ned', 'neil', 'nell',
+  'nellie', 'nelson', 'neville', 'nicholas', 'nick', 'nicky', 'nicola', 'nicole', 'nigel', 'nikki',
+  'nina', 'noah', 'noel', 'nola', 'nolan', 'nora', 'norah', 'norma', 'norman', 'olga',
+  'olive', 'oliver', 'olivia', 'ollie', 'omar', 'opal', 'ophelia', 'orlando', 'oscar', 'otis',
+  'otto', 'owen', 'paige', 'pam', 'pamela', 'pat', 'patricia', 'patrick', 'patsy', 'patti',
+  'patty', 'paul', 'paula', 'paulette', 'pauline', 'pearl', 'pedro', 'peggy', 'penelope', 'penny',
+  'percy', 'perry', 'pete', 'peter', 'peyton', 'phil', 'philip', 'phillip', 'phoebe', 'phyllis',
+  'pierre', 'pippa', 'polly', 'poppy', 'preston', 'priscilla', 'quentin', 'quinn', 'rachael', 'rachel',
+  'rafael', 'ralph', 'ramon', 'ramona', 'randall', 'randolph', 'randy', 'raphael', 'raquel', 'raul',
+  'ray', 'raymond', 'rebecca', 'rebekah', 'reed', 'reg', 'reggie', 'regina', 'reginald', 'rene',
+  'renee', 'reuben', 'rex', 'rhonda', 'ricardo', 'rich', 'richard', 'rick', 'rickey', 'ricky',
+  'riley', 'rita', 'rob', 'robbie', 'robert', 'roberta', 'roberto', 'robin', 'robyn', 'rocco',
+  'rochelle', 'rod', 'roderick', 'rodger', 'rodney', 'rodrigo', 'roger', 'roland', 'rolf', 'roman',
+  'ron', 'ronald', 'ronnie', 'rory', 'rosa', 'rosalie', 'rosalind', 'rosalyn', 'rose', 'rosemary',
+  'rosie', 'ross', 'rowan', 'roxanne', 'roy', 'royce', 'ruben', 'ruby', 'rudolph', 'rudy',
+  'rupert', 'russ', 'russell', 'ruth', 'ryan', 'sabrina', 'sadie', 'sally', 'sam', 'samantha',
+  'sammy', 'samuel', 'sandra', 'sandy', 'santiago', 'sara', 'sarah', 'sasha', 'saul', 'savannah',
+  'scott', 'sean', 'sebastian', 'selena', 'selina', 'serena', 'sergio', 'seth', 'shane', 'shannon',
+  'shari', 'sharon', 'shaun', 'shawn', 'shawna', 'sheena', 'sheila', 'shelby', 'sheldon', 'shelley',
+  'shelly', 'sheri', 'sherri', 'sherry', 'sheryl', 'shirley', 'sid', 'sidney', 'sienna', 'sierra',
+  'silvia', 'simeon', 'simon', 'simone', 'sinclair', 'siobhan', 'sofia', 'solomon', 'sonia', 'sonja',
+  'sonya', 'sophia', 'sophie', 'spencer', 'stacey', 'staci', 'stacie', 'stacy', 'stan', 'stanley',
+  'stefan', 'stefanie', 'stella', 'stephan', 'stephanie', 'stephen', 'sterling', 'steve', 'steven', 'stewart',
+  'stuart', 'sue', 'summer', 'susan', 'susanna', 'susannah', 'susanne', 'susie', 'suzanne', 'suzie',
+  'sybil', 'sydney', 'sylvester', 'sylvia', 'tabitha', 'tamara', 'tami', 'tammy', 'tania', 'tanya',
+  'tara', 'tasha', 'taylor', 'ted', 'teddy', 'terence', 'teresa', 'teri', 'terrance', 'terrell',
+  'terrence', 'terri', 'terry', 'tess', 'tessa', 'thelma', 'theo', 'theodore', 'theresa', 'therese',
+  'thomas', 'tia', 'tiffany', 'tim', 'timmy', 'timothy', 'tina', 'tobias', 'toby', 'todd',
+  'tom', 'tommie', 'tommy', 'toni', 'tonia', 'tony', 'tonya', 'tracey', 'traci', 'tracie',
+  'tracy', 'travis', 'trent', 'trevor', 'tricia', 'trina', 'trisha', 'tristan', 'troy', 'trudy',
+  'tyler', 'tyrone', 'ulrich', 'ursula', 'val', 'valerie', 'van', 'vanessa', 'vaughn', 'velma',
+  'vera', 'vernon', 'veronica', 'vic', 'vicki', 'vickie', 'vicky', 'victor', 'victoria', 'VINCE'.toLowerCase(),
+  'vincent', 'viola', 'violet', 'virginia', 'vivian', 'vivienne', 'vladimir', 'wade', 'wallace', 'wally',
+  'walt', 'walter', 'wanda', 'warren', 'warwick', 'wendell', 'wendy', 'werner', 'wes', 'wesley',
+  'whitney', 'wilbur', 'wilfred', 'will', 'willard', 'william', 'willie', 'willis', 'wilma', 'wilson',
+  'winifred', 'winston', 'wm', 'woodrow', 'wyatt', 'xavier', 'yasmin', 'yolanda', 'yvonne', 'zach',
+  'zachary', 'zack', 'zoe', 'zoey',
 ]);
+
+/** Common Romanized Chinese / Taiwanese / East Asian surnames so e.g. "Yi-Chun Lin" or "Wei-ting Chen" or "Elliott Chang" are recognized. */
+const EN_ROMANIZED_SURNAMES = new Set([
+  'chang', 'chen', 'lin', 'huang', 'lee', 'wang', 'wu', 'liu', 'tsai', 'yang',
+  'hsu', 'cheng', 'hsieh', 'kuo', 'hung', 'chiu', 'tseng', 'liao', 'lai', 'chou',
+  'yeh', 'su', 'chuang', 'lu', 'chiang', 'ho', 'hsiao', 'lo', 'kao', 'pan',
+  'chien', 'chu', 'chung', 'yu', 'peng', 'chao', 'shen', 'shih', 'hu', 'liang',
+  'yen', 'ko', 'weng', 'wei', 'sun', 'tai', 'fan', 'fang', 'sung', 'teng',
+  'tu', 'fu', 'hou', 'tsao', 'hsueh', 'ting', 'cho', 'ma', 'tung', 'wen',
+  'tang', 'lan', 'ku', 'chi', 'yao', 'lien', 'feng', 'ou', 'tien', 'kang',
+  'pai', 'wang', 'tsou', 'yu', 'wu', 'li', 'tu', 'kung', 'yen', 'han',
+  'yuan', 'chin', 'tung', 'lu', 'hsia', 'liu', 'shao', 'chien', 'ni', 'kan',
+  'chin', 'kuan', 'hsin', 'chi', 'yi', 'chu', 'fan', 'chiao', 'hsiang', 'yin',
+  'ling', 'chueh', 'shu', 'pao', 'jan', 'niu', 'kuan', 'mao', 'kim', 'park',
+  'choi', 'jung', 'kang', 'cho', 'yoon', 'jang', 'lim', 'shin', 'oh', 'seo',
+  'kwon', 'hwang', 'ahn', 'song', '전', 'hong', '유', 'ko', 'moon', 'yang',
+  'son', 'bae', 'baek', 'heo', 'nam', 'sim', 'noh', 'ha', 'guo', 'zhao',
+  'qian', 'zhou', 'zheng', 'feng', 'zhu', 'qin', 'you', 'xu', 'he', 'shi',
+  'zhang', 'kong', 'cao', 'yan', 'hua', 'jin', 'tao', 'jiang', 'qi', 'xie',
+  'zou', 'yu', 'bai', 'shui', 'dou', 'zhang', 'yun', 'su', 'pan', 'ge',
+  'xi', 'fan', 'peng', 'lang', 'lu', 'wei', 'chang', 'ma', 'miao', '凤',
+  'fang', 'yu', 'ren', 'yuan', 'liu', 'bao', 'shi', 'tang', 'fei', 'lian',
+  'cen', 'xue', 'lei', 'he', 'ni', 'tang', 'teng', 'yin', 'luo', 'bi',
+  'hao', 'wu', 'an', 'chang', 'le', 'yu', 'shi', 'fu', 'pi', 'bian',
+  'qi', 'kang', 'wu', 'yu', 'yuan', 'bu', 'gu', 'meng', 'ping', 'huang',
+  'he', 'mu', 'xiao', 'yin', 'yao', 'shao', 'zhan', 'wang', 'qi', 'mao',
+  'yu', 'di', 'mi', 'bei', 'ming', 'zang', 'ji', 'fu', 'cheng', 'dai',
+  'tan', 'song', 'mao', 'pang', 'xiong', 'ji', 'shu', 'qu', 'xiang', 'zhu',
+  'dong', 'liang', 'du', 'ruan', 'lan', 'min', 'xi', 'ji', 'ma', 'qiang',
+  'jia', 'lu', 'lou', 'wei', 'jiang', 'tong', 'yan', 'guo', 'mei', 'sheng',
+  'lin', 'diao', 'zhong', 'xu', 'qiu', 'luo', 'gao', 'xia', 'cai', 'tian',
+  'fan', 'hu', 'ling', 'huo', 'yu', 'wan', 'zhi', 'ke', 'zan', 'guan',
+  'lu', 'mo', 'jing', 'fang', 'qiu', 'miao', 'gan', 'xie', 'ying', 'zong',
+  'ding', 'xuan', 'ben', 'deng', 'yu', 'shan', 'hang', 'hong', 'bao', 'zhu',
+  'zuo', 'shi', 'cui', 'ji', 'niu', 'gong', 'cheng',
+]);
+
+/** Business, accounting, industrial, geographical, and company words that are NEVER part of a person's name. */
+const EN_NON_NAME_WORDS = new Set([
+  // Accounting & Ledger headers (e.g. Sales Ledger, Aged Debtors, Age Against, Tran Type, Days From, Credit Note)
+  'sales', 'ledger', 'aged', 'debtors', 'debtor', 'creditors', 'creditor', 'age', 'against',
+  'tran', 'trans', 'transaction', 'transactions', 'type', 'types', 'days', 'from', 'credit', 'debit',
+  'note', 'notes', 'invoice', 'invoices', 'account', 'accounts', 'balance', 'balances', 'total', 'totals',
+  'subtotal', 'amount', 'amounts', 'report', 'reports', 'detailed', 'summary', 'retrospective', 'period',
+  'date', 'dates', 'time', 'due', 'overdue', 'current', 'future', 'base', 'terms', 'conditions',
+  'month', 'months', 'year', 'years', 'day', 'weekly', 'monthly', 'annual', 'page', 'pages',
+  'purchase', 'order', 'orders', 'payment', 'payments', 'receipt', 'receipts', 'statement', 'statements',
+  'tax', 'vat', 'currency', 'sterling', 'dollar', 'dollars', 'euro', 'pound', 'pounds', 'net', 'gross',
+  'discount', 'interest', 'charge', 'charges', 'fee', 'fees', 'cost', 'costs', 'price', 'prices',
+  'budget', 'forecast', 'audit', 'fiscal', 'financial', 'finance', 'accounting', 'bookkeeping',
+  // General business / UI / support terms
+  'customer', 'customers', 'client', 'clients', 'buyer', 'buyers', 'purchaser', 'vendor', 'vendors',
+  'supplier', 'suppliers', 'partner', 'partners', 'member', 'members', 'user', 'users', 'admin',
+  'support', 'desk', 'help', 'service', 'services', 'care', 'center', 'centre', 'system', 'systems',
+  'solution', 'solutions', 'network', 'networks', 'access', 'log', 'logs', 'router', 'server', 'cloud',
+  'data', 'database', 'record', 'records', 'file', 'files', 'document', 'documents', 'form', 'forms',
+  'list', 'packing', 'shipping', 'billing', 'delivery', 'freight', 'air', 'sea', 'ocean', 'cargo',
+  'express', 'logistics', 'transport', 'transportation', 'warehouse', 'storage', 'distribution',
+  'contact', 'phone', 'telephone', 'mobile', 'fax', 'email', 'address', 'street', 'road', 'avenue',
+  'lane', 'drive', 'court', 'place', 'square', 'park', 'industrial', 'estate', 'zone', 'district',
+  'city', 'town', 'county', 'state', 'province', 'country', 'united', 'kingdom', 'states', 'republic',
+  'north', 'south', 'east', 'west', 'central', 'midland', 'midlands', 'northern', 'southern', 'eastern',
+  'western', 'national', 'international', 'global', 'world', 'worldwide', 'europe', 'european', 'asian',
+  'british', 'american', 'taiwan', 'tokyo', 'london', 'york', 'england', 'scotland', 'wales', 'ireland',
+  'branch', 'office', 'headquarters', 'division', 'department', 'section', 'unit', 'team', 'staff',
+  'general', 'manager', 'director', 'president', 'executive', 'officer', 'chairman', 'supervisor',
+  'engineer', 'specialist', 'consultant', 'coordinator', 'assistant', 'representative', 'agent',
+  // Industrial / Hardware / Automotive / Company words (SUK / Machan domain)
+  'company', 'corp', 'corporation', 'inc', 'incorporated', 'ltd', 'limited', 'plc', 'llc', 'llp',
+  'group', 'holdings', 'holding', 'enterprise', 'enterprises', 'business', 'businesses', 'firm',
+  'agency', 'bureau', 'institute', 'association', 'foundation', 'society', 'club', 'union', 'council',
+  'authority', 'board', 'committee', 'commission', 'ministry', 'government', 'public', 'private',
+  'commercial', 'commercials', 'trading', 'trade', 'import', 'export', 'wholesale', 'retail', 'direct',
+  'supply', 'supplies', 'product', 'products', 'goods', 'item', 'items', 'material', 'materials',
+  'equipment', 'machinery', 'machine', 'machines', 'tool', 'tools', 'tooling', 'hardware', 'software',
+  'cabinet', 'cabinets', 'trolley', 'trolleys', 'workbench', 'chest', 'chests', 'box', 'boxes',
+  'case', 'cases', 'rack', 'racks', 'shelf', 'shelves', 'locker', 'lockers', 'cart', 'carts',
+  'heavy', 'duty', 'high', 'low', 'quality', 'standard', 'premium', 'pro', 'plus', 'ultra', 'super',
+  'max', 'mini', 'micro', 'mega', 'multi', 'auto', 'automotive', 'motor', 'motors', 'motorcycles',
+  'vehicle', 'vehicles', 'car', 'cars', 'truck', 'trucks', 'van', 'vans', 'bus', 'coach', 'fleet',
+  'trailer', 'trailers', 'tyre', 'tyres', 'tire', 'tires', 'wheel', 'wheels', 'brake', 'brakes',
+  'clutch', 'gear', 'gearbox', 'transmission', 'engine', 'engines', 'exhaust', 'battery', 'batteries',
+  'body', 'bodyshop', 'paint', 'panel', 'windscreen', 'glass', 'diesel', 'petrol', 'fuel', 'oil',
+  'gas', 'power', 'energy', 'electric', 'electrical', 'electronic', 'electronics', 'digital',
+  'mechanical', 'hydraulic', 'pneumatic', 'precision', 'calibration', 'testing', 'inspection',
+  'engineering', 'construction', 'building', 'builders', 'property', 'properties', 'maintenance',
+  'repair', 'repairs', 'workshop', 'garage', 'garages', 'station', 'depot', 'store', 'stores',
+  'shop', 'shops', 'mart', 'market', 'outlet', 'factor', 'factors', 'spares', 'parts', 'components',
+  'accessories', 'fittings', 'fasteners', 'fixings', 'bearings', 'seals', 'valves', 'pumps', 'pipes',
+  'tubes', 'steel', 'iron', 'metal', 'metals', 'alloy', 'aluminum', 'aluminium', 'brass', 'copper',
+  'plastic', 'plastics', 'rubber', 'wood', 'timber', 'chemical', 'chemicals', 'coating', 'coatings',
+  'welding', 'cutting', 'grinding', 'drilling', 'milling', 'turning', 'casting', 'forging', 'stamping',
+  'molding', 'moulding', 'fabrication', 'manufacturing', 'manufacturer', 'makers', 'works', 'plant',
+  'factory', 'mill', 'foundry', 'laboratory', 'labs', 'research', 'development', 'design', 'studio',
+  'media', 'press', 'print', 'printing', 'publishing', 'graphics', 'sign', 'signs', 'display',
+  'safety', 'security', 'protection', 'fire', 'rescue', 'recovery', 'breakdown', 'assistance',
+  'hire', 'rental', 'rentals', 'leasing', 'contract', 'contracts', 'project', 'projects', 'plan',
+  'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth',
+  'new', 'old', 'good', 'best', 'better', 'great', 'prime', 'premier', 'choice', 'select', 'elite',
+  'classic', 'modern', 'advanced', 'smart', 'fast', 'quick', 'rapid', 'speed', 'clean', 'clear',
+  'pure', 'fresh', 'green', 'blue', 'red', 'black', 'white', 'silver', 'gold', 'golden', 'star',
+  'sun', 'moon', 'sky', 'earth', 'wind', 'water', 'wave', 'river', 'lake', 'sea', 'ocean', 'bay',
+  'hill', 'hills', 'mountain', 'valley', 'forest', 'wood', 'woods', 'field', 'fields', 'meadow',
+  'garden', 'gardens', 'farm', 'farms', 'bridge', 'gate', 'tower', 'castle', 'house', 'home',
+  'hall', 'manor', 'lodge', 'inn', 'hotel', 'motel', 'pub', 'bar', 'cafe', 'restaurant', 'bakery',
+  'food', 'foods', 'drink', 'drinks', 'health', 'medical', 'dental', 'clinic', 'hospital', 'pharmacy',
+  'vet', 'veterinary', 'pet', 'pets', 'animal', 'animals', 'school', 'college', 'academy', 'university',
+  'training', 'education', 'learning', 'sport', 'sports', 'fitness', 'gym', 'golf', 'racing', 'marine',
+  'aviation', 'aero', 'aerospace', 'defense', 'defence', 'military', 'police', 'royal', 'imperial',
+  'crown', 'king', 'queen', 'prince', 'princess', 'duke', 'lord', 'lady', 'knight', 'saint',
+  'january', 'february', 'march', 'april', 'june', 'july', 'august', 'september', 'october', 'november', 'december',
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'dear', 'thanks', 'thank', 'regards', 'sincerely', 'yours', 'faithfully', 'truly', 'subject', 'ref',
+  'reference', 'number', 'code', 'status', 'level', 'grade', 'class', 'category', 'group', 'series',
+  'model', 'version', 'edition', 'issue', 'volume', 'part', 'section', 'chapter', 'article', 'clause',
+  'point', 'line', 'row', 'column', 'table', 'chart', 'graph', 'figure', 'image', 'photo', 'picture',
+  'view', 'mode', 'style', 'format', 'layout', 'theme', 'color', 'colour', 'size', 'weight', 'length',
+  'width', 'height', 'depth', 'volume', 'area', 'rate', 'ratio', 'scale', 'index', 'score', 'value',
+  'card', 'cards', 'cash', 'check', 'cheque', 'bank', 'banking', 'trust', 'fund', 'funds', 'capital',
+  'asset', 'assets', 'equity', 'bond', 'bonds', 'stock', 'stocks', 'share', 'shares', 'market',
+]);
+
+function isPlausibleEnName(match: string, before = ''): boolean {
+  const words = match.trim().split(/\s+/).map((w) => w.replace(/\.$/, ''));
+  if (words.length < 2) return false;
+  const lowerWords = words.map((w) => w.toLowerCase());
+
+  // 1. Reject immediately if any token is a known business/report/industrial/company non-name word
+  if (lowerWords.some((w) => EN_NON_NAME_WORDS.has(w))) return false;
+
+  // 2. Accept if preceded by an explicit title/honorific or contact label
+  if (
+    /(?:Mr|Mrs|Ms|Miss|Dr|Prof)\.?\s*$|(?:\b(?:Contact|Attn|Attention|Manager|Director|Representative|Prepared\s+by|Signed\s+by|Approved\s+by)|(?:聯絡人|連絡人|承辦人|負責人|業務|主管|代表人|簽署人))\s*[:：]?\s*$/iu.test(
+      before,
+    ) ||
+    /[\u4e00-\u9fa5]\s*[(（]\s*$/u.test(before)
+  ) {
+    return true;
+  }
+
+  // 3. Accept if the first word is a known English given name (e.g. Bryan Long, David Miller, Claire Pirie)
+  const first = lowerWords[0];
+  if (EN_GIVEN_NAMES.has(first)) return true;
+
+  // 4. Accept if the surname is a common Romanized East Asian surname or Celtic patronymic (Mc/Mac/O')
+  const last = lowerWords[lowerWords.length - 1];
+  const rawLast = words[words.length - 1];
+  if (EN_ROMANIZED_SURNAMES.has(last) || /^(?:Mc|Mac|O')[A-Z][a-z]{2,}$/.test(rawLast)) {
+    return true;
+  }
+
+  return false;
+}
 
 export const BUILTIN_PATTERNS: Pattern[] = [
   {
@@ -326,19 +585,14 @@ export const BUILTIN_PATTERNS: Pattern[] = [
     id: 'en-name',
     name: '英文姓名',
     group: 'intl',
-    note: '標準英文姓名（名＋姓，如 David Miller、Elliott Chang），排除商務名詞與專有名詞',
+    note: '常見英文教名、英譯華人姓氏或稱謂／聯絡人欄位後之姓名（如 David Miller、Elliott Chang、Bryan Long），排除報表表頭與商務詞彙',
     category: '姓名',
     source: 'builtin',
     regex: EN_NAME_REGEX,
     flags: 'gu',
-    example: 'David Miller、Elliott Chang、John Smith',
+    example: 'David Miller、Elliott Chang、Bryan Long',
     enabled: true,
-    validate: (match: string) => {
-      if (EN_NAME_STOPLIST.has(match)) return false;
-      const nonNameWords = /^(?:customer|name|client|buyer|purchaser|account|order|invoice|total|amount|billing|shipping|delivery|payment|terms|conditions|support|desk|service|product|quality|general|manager|director|department|company|corporation|enterprise|industrial|international|hardware|software|system|solution|technology|tool|tools|cabinet|steel|heavy|duty|high|low|first|second|third|contact|phone|mobile|email|address|office|branch|tokyo|london|taiwan|united|north|south|east|west|central|access|log|router|record|ticket|reference|number|date|time|subject|dear|thanks|best|regards|sincerely|january|february|march|april|june|july|august|september|october|november|december)$/i;
-      if (match.split(/\s+/).some((w) => nonNameWords.test(w.replace(/\.$/, '')))) return false;
-      return true;
-    },
+    validate: isPlausibleEnName,
   },
   {
     id: 'email',

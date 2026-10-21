@@ -148,7 +148,7 @@ function mount(): void {
 
         el('span', { class: 'brand-divider', 'aria-hidden': 'true' }),
 
-        el('div', { class: 'brand-text' }, el('h1', {}, '文件去識別化工具 v1.3.0'), el('span', { class: 'muted' }, '純前端處理・文件不離開你的電腦')),
+        el('div', { class: 'brand-text' }, el('h1', {}, '文件去識別化工具 v1.3.1'), el('span', { class: 'muted' }, '純前端處理・文件不離開你的電腦')),
 
       ),
 
@@ -164,7 +164,7 @@ function mount(): void {
 
         el('div', { class: 'footer-brand' },
 
-          el('strong', {}, '明昌國際 企業版 v1.3.0'),
+          el('strong', {}, '明昌國際 企業版 v1.3.1'),
 
           el('span', { class: 'muted' }, '　文件去識別化工具'),
 
