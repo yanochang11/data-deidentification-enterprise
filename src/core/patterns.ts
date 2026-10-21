@@ -127,24 +127,37 @@ const CUSTOMER_LABEL =
   '|[Ss]old\\s*[Tt]o|[Bb]ill\\s*[Tt]o|[Ss]hip\\s*[Tt]o|[Cc]onsignee|[Aa]ccount\\s*[Nn]ame)';
 
 const CONTEXTUAL_CUSTOMER_REGEX =
-  `(?<=${CUSTOMER_LABEL}[\\x20\\t]*[:：][\\x20\\t]*)` +
-  `[${CJK}A-Za-z0-9&·][${CJK}A-Za-z0-9&·.,'\\-\\x20]{1,59}?(?=[\\r\\n，;；()（）\\[\\]【】{}|]|\\x20+[(（]|$)`;
-
-const INTL_COMPANY_SUFFIX =
-  '(?:(?:Group|Holdings?|Enterprises?|Industries?|Technologies?|Solutions?|Systems?)(?:,?\\s*(?:Inc\\.?|Incorporated|LLC|L\\.L\\.C\\.|Ltd\\.?|Limited|Corp\\.?|Corporation|Co\\.,?\\s*Ltd\\.?|Co\\.|GmbH|AG|S\\.p\\.A\\.?|B\\.V\\.?|S\\.A\\.?|Pty\\.?\\s*Ltd\\.?|Pte\\.?\\s*Ltd\\.?|SDN\\.?\\s*BHD\\.?|SE|Plc|LLP|LP))?|Inc\\.?|Incorporated|LLC|L\\.L\\.C\\.|Ltd\\.?|Limited|Corp\\.?|Corporation|Co\\.,?\\s*Ltd\\.?|Co\\.|GmbH|AG|S\\.p\\.A\\.?|B\\.V\\.?|S\\.A\\.?|Pty\\.?\\s*Ltd\\.?|Pte\\.?\\s*Ltd\\.?|SDN\\.?\\s*BHD\\.?|SE|Plc|LLP|LP)';
-
-const INTL_COMPANY_REGEX =
-  `(?<![A-Za-z0-9])` +
   `(?:` +
-  `[A-Z][A-Za-z0-9&·\\s.,'\\-]{1,45}?\\b${INTL_COMPANY_SUFFIX}(?![A-Za-z0-9])` +
+  `(?<=${CUSTOMER_LABEL}[\\x20\\t]*[:：][\\x20\\t]*)` +
+  `[${CJK}A-Za-z0-9&·][${CJK}A-Za-z0-9&·.,'\\-\\x20]{1,59}?(?=[\\r\\n，;；()（）\\[\\]【】{}|]|\\x20+[(（]|$)` +
   `|` +
-  `[A-Z][A-Za-z0-9.'\\-]{1,20}(?:\\x20+[A-Z][A-Za-z0-9.'\\-]{1,20})*\\x20+(?:&|and)\\x20+[A-Z][A-Za-z0-9.'\\-]{1,20}(?:\\x20+(?:Decker|Holdings?|Group|Enterprises?|Solutions?|Systems?|Technologies?|Tools?|Industries?|Trading|Services?|International))?` +
+  `(?<=\\bAccount[\\x20\\t]*:[\\x20\\t]*[A-Z0-9&+\\-]{2,12}[\\x20\\t]+)[^\\r\\n]+?(?=[\\x20\\t]+Date\\x20+Last\\x20+Tran\\b|[\\r\\n]|$)` +
   `)`;
 
+const INTL_COMPANY_LEGAL =
+  '(?:Inc\\.?|INC\\.?|Incorporated|INCORPORATED|LLC|L\\.L\\.C\\.|Ltd\\.?|LTD\\.?|Limited|LIMITED|Corp\\.?|CORP\\.?|Corporation|CORPORATION|Co\\.,?\\s*Ltd\\.?|Co\\.,?\\s*LTD\\.?|Co\\.|GmbH|AG|S\\.p\\.A\\.?|B\\.V\\.?|BV|S\\.A\\.?|Pty\\.?\\s*Ltd\\.?|Pte\\.?\\s*Ltd\\.?|SDN\\.?\\s*BHD\\.?|SE|Plc|PLC|LLP|LP)';
+
+const INTL_COMPANY_SUFFIX =
+  `(?:(?:Group|GROUP|Holdings?|HOLDINGS?|Enterprises?|Industries?|Technologies?|Solutions?|Systems?)(?:,?\\x20*${INTL_COMPANY_LEGAL})?|${INTL_COMPANY_LEGAL})(?:\\x20+${INTL_COMPANY_LEGAL})?(?:\\x20+\\([A-Za-z0-9&.,'\\-\\x20]{1,25}\\)(?:\\x20+${INTL_COMPANY_LEGAL})?)?`;
+
+const INTL_COMPANY_REGEX =
+  `(?<![A-Za-z])(?!Page\\x20+\\d)(?!Account\\b)(?<!Account[\\x20\\t]*:[\\x20\\t]*[A-Z0-9&+\\-]*)` +
+  `(?:` +
+  `[A-Z](?:(?![0-9][A-Z][a-z])[A-Za-z0-9&·()/,+'\\-\\x20.]){1,55}?\\b${INTL_COMPANY_SUFFIX}(?![A-Za-z0-9])` +
+  `|` +
+  `[A-Z][A-Za-z0-9.'\\-]{1,20}(?:\\x20+[A-Z][A-Za-z0-9.'\\-]{1,20})*\\x20+(?:&|and)\\x20+[A-Z][A-Za-z0-9.'\\-]{1,20}(?:\\x20+(?:Decker|Holdings?|Group|Enterprises?|Solutions?|Systems?|Technologies?|Tools?|Industries?|Trading|Services?|International|Factors?|Spares?|Supplies|Commercials?|Repairs?))?` +
+  `)`;
+
+const EN_HONORIFIC = '(?:(?:Mr|Mrs|Ms|Miss|Dr|Prof)\\.?[\\x20\\t]+)';
+const EN_TITLE_WORD = "(?:(?:Mc|Mac|O')[A-Z][a-z]{1,14}|[A-Z]{1,2}[a-z]{1,16}(?:-[A-Z][a-z]{1,16})?)";
+const EN_MIDDLE_PART = "(?:[\\x20\\t]+(?:[A-Z]\\.?|'[A-Za-z]{2,12}'|\\/[\\x20\\t]*[A-Z][a-z]{1,15}|(?:Le|La|De|Van|Von|[A-Z][a-z]{1,15})))";
+
 const EN_NAME_REGEX =
-  '(?<![A-Za-z0-9])' +
-  '[A-Z][a-z]{1,16}(?:\\x20+[A-Z]\\.?)?\\x20+(?:(?:Mc|Mac|O\')[A-Z][a-z]{1,14}|[A-Z][a-z]{1,16}(?:-[A-Z][a-z]{1,16})?)' +
-  '(?![A-Za-z0-9])';
+  '(?:' +
+  `(?<![A-Za-z0-9])(?:${EN_HONORIFIC}[A-Za-z][a-z]{1,16}${EN_MIDDLE_PART}{0,2}[\\x20\\t]+${EN_TITLE_WORD}|${EN_TITLE_WORD}${EN_MIDDLE_PART}{0,2}[\\x20\\t]+${EN_TITLE_WORD})(?![A-Za-z0-9])` +
+  '|' +
+  `(?<=Totals\\x20+for\\x20+account[\\x20\\t]*:[\\x20\\t]*[A-Z0-9&+\\-]{2,12}[\\r\\n]+)(?:${EN_HONORIFIC})?[A-Za-z][A-Za-z.'\\-\\x20/]{1,35}?(?=\\x20+(?:\\(?a\\/cs\\)?|Accts|44\\x20|353\\x20|0\\d|\\d+\\.\\d+|-\\d+\\.\\d+)|[\\r\\n]|$)` +
+  ')';
 
 /** Common English first names (given names) to prevent matching arbitrary Title-Case business phrases (e.g. Sales Ledger, Aged Debtors). */
 const EN_GIVEN_NAMES = new Set([
@@ -152,19 +165,19 @@ const EN_GIVEN_NAMES = new Set([
   'alexandra', 'alexis', 'alfred', 'alice', 'alicia', 'alison', 'allan', 'allen', 'allison', 'alyssa',
   'amanda', 'amber', 'amelia', 'amy', 'andrea', 'andrew', 'andy', 'angel', 'angela', 'angie',
   'anita', 'ann', 'anna', 'anne', 'annette', 'annie', 'anthony', 'antonio', 'april', 'archie',
-  'ariel', 'arnold', 'arthur', 'ashley', 'AUDREY'.toLowerCase(), 'austin', 'ava', 'barbara', 'barry', 'beatrice',
+  'ariel', 'arnold', 'arthur', 'ashley', 'audrey', 'austin', 'ava', 'barbara', 'barry', 'beatrice',
   'becky', 'belinda', 'ben', 'benjamin', 'bernard', 'bernice', 'bertha', 'bessie', 'beth', 'betty',
   'beverly', 'bill', 'billy', 'blake', 'bob', 'bobby', 'bonnie', 'brad', 'bradley', 'brandon',
-  'brenda', 'brent', 'brett', 'brian', 'brianna', 'bridget', 'brittany', 'brooke', 'bruce', 'bryan',
+  'brenda', 'brent', 'brett', 'brian', 'brianna', 'brid', 'bridget', 'brittany', 'brooke', 'bruce', 'bryan',
   'bryce', 'byron', 'caleb', 'callum', 'calvin', 'cameron', 'camilla', 'candice', 'carl', 'carla',
   'carlos', 'carmen', 'carol', 'carole', 'caroline', 'carolyn', 'carrie', 'carter', 'casey', 'cassandra',
-  'catherine', 'cathy', 'cecil', 'cecilia', 'cedric', 'celia', 'chad', 'charles', 'charlie', 'charlotte',
-  'chase', 'chelsea', 'cheryl', 'chester', 'chloe', 'chris', 'christian', 'christina', 'christine', 'christopher',
-  'cindy', 'claire', 'clara', 'clarence', 'clark', 'claude', 'claudia', 'clayton', 'cliff', 'clifford',
-  'clint', 'clinton', 'clive', 'clyde', 'cody', 'colin', 'colleen', 'connie', 'connor', 'CONSTANCE'.toLowerCase(),
-  'corey', 'corinne', 'cory', 'courtney', 'craig', 'crystal', 'curtis', 'cynthia', 'cyril', 'daisy',
-  'dale', 'dallas', 'damian', 'damon', 'dan', 'dana', 'daniel', 'danielle', 'danny', 'daphne',
-  'darlene', 'darren', 'darryl', 'daryl', 'dave', 'david', 'dawn', 'dean', 'debbie', 'deborah',
+  'catherine', 'cathy', 'cecil', 'cecilia', 'cedric', 'celia', 'chad', 'charleen', 'charles', 'charlie', 'charlotte',
+  'chas', 'chase', 'chelsea', 'cheryl', 'chester', 'chloe', 'chris', 'christian', 'christina', 'christine', 'christopher',
+  'cindy', 'claire', 'clara', 'clarence', 'clark', 'claude', 'claudia', 'claudio', 'clayton', 'cliff', 'clifford',
+  'clint', 'clinton', 'clive', 'clyde', 'cody', 'colin', 'colleen', 'connie', 'connor', 'constance',
+  'corey', 'corinne', 'cory', 'courtney', 'craig', 'crystal', 'curtis', 'cynthia', 'cyril', 'dafydd', 'daisy',
+  'dale', 'dallas', 'damian', 'damien', 'damon', 'dan', 'dana', 'daniel', 'danielle', 'danny', 'daphne',
+  'darlene', 'darrell', 'darren', 'darryl', 'daryl', 'dave', 'david', 'dawn', 'dean', 'debbie', 'deborah',
   'debra', 'declan', 'deirdre', 'delia', 'denis', 'denise', 'dennis', 'derek', 'derrick', 'desmond',
   'devin', 'devon', 'diana', 'diane', 'dianne', 'dick', 'diego', 'dillon', 'dolores', 'dominic',
   'don', 'donald', 'donna', 'donovan', 'dora', 'doreen', 'doris', 'dorothy', 'doug', 'douglas',
@@ -172,27 +185,27 @@ const EN_GIVEN_NAMES = new Set([
   'edgar', 'edith', 'edmond', 'edmund', 'edna', 'eduardo', 'edward', 'edwin', 'eileen', 'elaine',
   'eleanor', 'elena', 'eli', 'elijah', 'elisa', 'elisabeth', 'elise', 'eliza', 'elizabeth', 'ella',
   'ellen', 'elliot', 'elliott', 'ellis', 'elmer', 'eloise', 'elsa', 'elsie', 'elvin', 'elvis',
-  'emanuel', 'emerson', 'emil', 'emily', 'emma', 'emmanuel', 'eric', 'erica', 'erick', 'erik',
+  'emanuel', 'emerson', 'emil', 'emily', 'emma', 'emmanuel', 'enid', 'eric', 'erica', 'erick', 'erik',
   'erika', 'erin', 'ernest', 'ernie', 'errol', 'estelle', 'esther', 'ethan', 'ethel', 'eugene',
   'eunice', 'eva', 'evan', 'evelyn', 'everett', 'faith', 'faye', 'felicia', 'felix', 'fernando',
   'fiona', 'florence', 'floyd', 'frances', 'francis', 'francisco', 'frank', 'frankie', 'franklin', 'fred',
-  'freda', 'freddie', 'frederick', 'frida', 'gabriel', 'gabrielle', 'gail', 'garrett', 'garry', 'gary',
+  'freda', 'freddie', 'frederick', 'frida', 'gabriel', 'gabrielle', 'gail', 'gareth', 'garrett', 'garry', 'garth', 'gary',
   'gavin', 'gayle', 'gemma', 'gene', 'genevieve', 'geoff', 'geoffrey', 'george', 'georgia', 'georgina',
   'gerald', 'geraldine', 'gerard', 'gerry', 'gertrude', 'gilbert', 'giles', 'gill', 'gillian', 'gina',
-  'ginger', 'gloria', 'glenn', 'glyn', 'gordon', 'grace', 'graeme', 'graham', 'grant', 'greg',
-  'gregg', 'gregory', 'greta', 'gretchen', 'guy', 'gwen', 'gwendolyn', 'hailey', 'haley', 'hamish',
+  'ginger', 'gloria', 'glenn', 'glyn', 'gordon', 'grace', 'graeme', 'graham', 'granville', 'grant', 'greg',
+  'gregg', 'gregory', 'greta', 'gretchen', 'gus', 'guy', 'gwen', 'gwendolyn', 'hailey', 'haley', 'hamish',
   'hank', 'hanna', 'hannah', 'hans', 'harold', 'harriet', 'harrison', 'harry', 'harvey', 'hayden',
   'hayley', 'hazel', 'heath', 'heather', 'hector', 'heidi', 'helen', 'helena', 'helene', 'henri',
   'henry', 'herbert', 'herman', 'hilary', 'hilda', 'holly', 'homer', 'hope', 'horace', 'howard',
-  'hubert', 'ugh', 'hugh', 'hugo', 'hunter', 'ian', 'ida', 'ignacio', 'igor', 'ilona',
-  'imogen', 'inez', 'ingrid', 'irene', 'iris', 'irma', 'irving', 'irwin', 'isaac', 'isabel',
-  'isabella', 'isabelle', 'isaiah', 'ivan', 'ivy', 'jack', 'jackie', 'jackson', 'jacob', 'jacqueline',
+  'hubert', 'ugh', 'hugh', 'hugo', 'hunter', 'iain', 'ian', 'ida', 'ignacio', 'igor', 'ilona',
+  'imogen', 'inez', 'ingrid', 'ioan', 'irene', 'iris', 'irma', 'irving', 'irwin', 'isaac', 'isabel',
+  'isabella', 'isabelle', 'isaiah', 'isobel', 'ivan', 'ivy', 'jack', 'jackie', 'jackson', 'jacob', 'jacqueline',
   'jacqui', 'jade', 'jake', 'james', 'jamie', 'jan', 'jane', 'janet', 'janice', 'janine',
   'jared', 'jasmine', 'jason', 'jasper', 'javier', 'jay', 'jayden', 'jean', 'jeanette', 'jeanne',
   'jeannette', 'jeff', 'jeffery', 'jeffrey', 'jen', 'jenna', 'jennifer', 'jenny', 'jeremy', 'jerome',
   'jerry', 'jesse', 'jessica', 'jessie', 'jill', 'jillian', 'jim', 'jimmie', 'jimmy', 'jo',
   'joan', 'joann', 'joanna', 'joanne', 'jocelyn', 'jodi', 'jodie', 'jody', 'joe', 'joel',
-  'joey', 'johann', 'johanna', 'john', 'johnathan', 'johnnie', 'johnny', 'jolene', 'jon', 'jonah',
+  'joey', 'johan', 'johann', 'johanna', 'john', 'johnathan', 'johnnie', 'johnny', 'jolene', 'jon', 'jonah',
   'jonathan', 'jonathon', 'jordan', 'jorge', 'jose', 'josef', 'joseph', 'josephine', 'josh', 'joshua',
   'josie', 'joy', 'joyce', 'juan', 'juanita', 'judith', 'judy', 'jules', 'julia', 'julian',
   'juliana', 'julie', 'juliet', 'juliette', 'julio', 'julius', 'june', 'justin', 'justine', 'kaitlyn',
@@ -205,22 +218,22 @@ const EN_GIVEN_NAMES = new Set([
   'lee', 'leigh', 'leila', 'leland', 'lena', 'lenny', 'leo', 'leon', 'leona', 'leonard',
   'leonie', 'leroy', 'les', 'lesley', 'leslie', 'lester', 'leticia', 'lewis', 'liam', 'lillian',
   'lillie', 'lilly', 'lily', 'linda', 'lindsay', 'lindsey', 'lionel', 'lisa', 'liz', 'liza',
-  'lizzie', 'lloyd', 'logan', 'lois', 'lola', 'lonnie', 'lora', 'loren', 'lorena', 'lorenzo',
+  'lizzie', 'lloyd', 'logan', 'lois', 'lola', 'lonnie', 'lora', 'loraine', 'loren', 'lorena', 'lorenzo',
   'loretta', 'lori', 'lorna', 'lorraine', 'lou', 'louis', 'louisa', 'louise', 'lowell', 'lucas',
   'lucia', 'lucille', 'lucinda', 'lucy', 'luis', 'luke', 'luther', 'lydia', 'lyle', 'lynda',
-  'lynette', 'lynn', 'lynne', 'mabel', 'mackenzie', 'maddie', 'madeleine', 'madeline', 'madison', 'mae',
+  'lyndsey', 'lynette', 'lynn', 'lynne', 'mabel', 'mackenzie', 'maddie', 'madeleine', 'madeline', 'madison', 'mae',
   'maggie', 'malcolm', 'mallory', 'mandy', 'manuel', 'marc', 'marcel', 'marcia', 'marco', 'marcos',
   'marcus', 'margaret', 'margarita', 'margery', 'margie', 'margo', 'marguerite', 'maria', 'marian', 'marianne',
   'marie', 'marilyn', 'marina', 'mario', 'marion', 'marisa', 'marissa', 'marjorie', 'mark', 'marlene',
-  'marlon', 'marsha', 'marshall', 'marta', 'martha', 'martin', 'martina', 'marty', 'marvin', 'mary',
+  'marlon', 'marsha', 'marshall', 'marta', 'martha', 'martin', 'martina', 'marty', 'martyn', 'marvin', 'mary',
   'mason', 'mathew', 'matilda', 'matt', 'matthew', 'maureen', 'maurice', 'mavis', 'max', 'maxine',
-  'may', 'maya', 'megan', 'meghan', 'mel', 'melanie', 'melinda', 'melissa', 'melody', 'melvin',
+  'may', 'maya', 'mazher', 'megan', 'meghan', 'mel', 'melanie', 'melinda', 'melissa', 'melody', 'melvin',
   'mercedes', 'meredith', 'merle', 'mervyn', 'mia', 'micaela', 'micah', 'michael', 'michaela', 'micheal',
-  'michel', 'michele', 'michelle', 'mick', 'mickey', 'miguel', 'mike', 'mildred', 'miles', 'millie',
+  'michel', 'michela', 'michele', 'michelle', 'mick', 'mickey', 'miguel', 'mike', 'mildred', 'miles', 'millie',
   'milton', 'mindy', 'minnie', 'miranda', 'miriam', 'misty', 'mitch', 'mitchell', 'moira', 'molly',
   'mona', 'monica', 'monika', 'monique', 'monte', 'monty', 'morgan', 'morris', 'morton', 'muriel',
   'murray', 'myles', 'myra', 'myrna', 'myron', 'myrtle', 'nadia', 'nadine', 'nan', 'nancy',
-  'naomi', 'natalia', 'natalie', 'natasha', 'nathan', 'nathaniel', 'neal', 'ned', 'neil', 'nell',
+  'naomi', 'natalia', 'natalie', 'natasha', 'nathan', 'nathaniel', 'neal', 'ned', 'neil', 'neill', 'nell',
   'nellie', 'nelson', 'neville', 'nicholas', 'nick', 'nicky', 'nicola', 'nicole', 'nigel', 'nikki',
   'nina', 'noah', 'noel', 'nola', 'nolan', 'nora', 'norah', 'norma', 'norman', 'olga',
   'olive', 'oliver', 'olivia', 'ollie', 'omar', 'opal', 'ophelia', 'orlando', 'oscar', 'otis',
@@ -238,22 +251,22 @@ const EN_GIVEN_NAMES = new Set([
   'rupert', 'russ', 'russell', 'ruth', 'ryan', 'sabrina', 'sadie', 'sally', 'sam', 'samantha',
   'sammy', 'samuel', 'sandra', 'sandy', 'santiago', 'sara', 'sarah', 'sasha', 'saul', 'savannah',
   'scott', 'sean', 'sebastian', 'selena', 'selina', 'serena', 'sergio', 'seth', 'shane', 'shannon',
-  'shari', 'sharon', 'shaun', 'shawn', 'shawna', 'sheena', 'sheila', 'shelby', 'sheldon', 'shelley',
+  'shari', 'sharon', 'shaun', 'shauna', 'shawn', 'shawna', 'sheena', 'sheila', 'shelby', 'sheldon', 'shelley',
   'shelly', 'sheri', 'sherri', 'sherry', 'sheryl', 'shirley', 'sid', 'sidney', 'sienna', 'sierra',
-  'silvia', 'simeon', 'simon', 'simone', 'sinclair', 'siobhan', 'sofia', 'solomon', 'sonia', 'sonja',
+  'silvia', 'simeon', 'simi', 'simon', 'simone', 'sinclair', 'siobhan', 'sofia', 'solomon', 'sonia', 'sonja',
   'sonya', 'sophia', 'sophie', 'spencer', 'stacey', 'staci', 'stacie', 'stacy', 'stan', 'stanley',
   'stefan', 'stefanie', 'stella', 'stephan', 'stephanie', 'stephen', 'sterling', 'steve', 'steven', 'stewart',
   'stuart', 'sue', 'summer', 'susan', 'susanna', 'susannah', 'susanne', 'susie', 'suzanne', 'suzie',
-  'sybil', 'sydney', 'sylvester', 'sylvia', 'tabitha', 'tamara', 'tami', 'tammy', 'tania', 'tanya',
+  'swally', 'sybil', 'sydney', 'sylvester', 'sylvia', 'tabitha', 'tamara', 'tami', 'tammy', 'tamo', 'tania', 'tanya',
   'tara', 'tasha', 'taylor', 'ted', 'teddy', 'terence', 'teresa', 'teri', 'terrance', 'terrell',
   'terrence', 'terri', 'terry', 'tess', 'tessa', 'thelma', 'theo', 'theodore', 'theresa', 'therese',
   'thomas', 'tia', 'tiffany', 'tim', 'timmy', 'timothy', 'tina', 'tobias', 'toby', 'todd',
   'tom', 'tommie', 'tommy', 'toni', 'tonia', 'tony', 'tonya', 'tracey', 'traci', 'tracie',
   'tracy', 'travis', 'trent', 'trevor', 'tricia', 'trina', 'trisha', 'tristan', 'troy', 'trudy',
   'tyler', 'tyrone', 'ulrich', 'ursula', 'val', 'valerie', 'van', 'vanessa', 'vaughn', 'velma',
-  'vera', 'vernon', 'veronica', 'vic', 'vicki', 'vickie', 'vicky', 'victor', 'victoria', 'VINCE'.toLowerCase(),
+  'vera', 'vernon', 'veronica', 'vic', 'vicki', 'vickie', 'vicky', 'victor', 'victoria', 'vimal', 'vince',
   'vincent', 'viola', 'violet', 'virginia', 'vivian', 'vivienne', 'vladimir', 'wade', 'wallace', 'wally',
-  'walt', 'walter', 'wanda', 'warren', 'warwick', 'wendell', 'wendy', 'werner', 'wes', 'wesley',
+  'walt', 'walter', 'wanda', 'wanli', 'warren', 'warwick', 'wendell', 'wendy', 'werner', 'wes', 'wesley',
   'whitney', 'wilbur', 'wilfred', 'will', 'willard', 'william', 'willie', 'willis', 'wilma', 'wilson',
   'winifred', 'winston', 'wm', 'woodrow', 'wyatt', 'xavier', 'yasmin', 'yolanda', 'yvonne', 'zach',
   'zachary', 'zack', 'zoe', 'zoey',
@@ -295,18 +308,18 @@ const EN_ROMANIZED_SURNAMES = new Set([
   'zuo', 'shi', 'cui', 'ji', 'niu', 'gong', 'cheng',
 ]);
 
-/** Business, accounting, industrial, geographical, and company words that are NEVER part of a person's name. */
+/** Business, accounting, industrial, and company words that are NEVER part of a person's name. */
 const EN_NON_NAME_WORDS = new Set([
-  // Accounting & Ledger headers (e.g. Sales Ledger, Aged Debtors, Age Against, Tran Type, Days From, Credit Note)
+  // Accounting & Ledger headers (e.g. Sales Ledger, Aged Debtors, Age Against, Tran Type, Days From, Credit Note, Goods In)
   'sales', 'ledger', 'aged', 'debtors', 'debtor', 'creditors', 'creditor', 'age', 'against',
   'tran', 'trans', 'transaction', 'transactions', 'type', 'types', 'days', 'from', 'credit', 'debit',
   'note', 'notes', 'invoice', 'invoices', 'account', 'accounts', 'balance', 'balances', 'total', 'totals',
   'subtotal', 'amount', 'amounts', 'report', 'reports', 'detailed', 'summary', 'retrospective', 'period',
   'date', 'dates', 'time', 'due', 'overdue', 'current', 'future', 'base', 'terms', 'conditions',
-  'month', 'months', 'year', 'years', 'day', 'weekly', 'monthly', 'annual', 'page', 'pages',
+  'month', 'months', 'year', 'years', 'weekly', 'monthly', 'annual', 'pages',
   'purchase', 'order', 'orders', 'payment', 'payments', 'receipt', 'receipts', 'statement', 'statements',
   'tax', 'vat', 'currency', 'sterling', 'dollar', 'dollars', 'euro', 'pound', 'pounds', 'net', 'gross',
-  'discount', 'interest', 'charge', 'charges', 'fee', 'fees', 'cost', 'costs', 'price', 'prices',
+  'discount', 'interest', 'charge', 'charges', 'fee', 'fees', 'cost', 'costs', 'prices',
   'budget', 'forecast', 'audit', 'fiscal', 'financial', 'finance', 'accounting', 'bookkeeping',
   // General business / UI / support terms
   'customer', 'customers', 'client', 'clients', 'buyer', 'buyers', 'purchaser', 'vendor', 'vendors',
@@ -314,15 +327,15 @@ const EN_NON_NAME_WORDS = new Set([
   'support', 'desk', 'help', 'service', 'services', 'care', 'center', 'centre', 'system', 'systems',
   'solution', 'solutions', 'network', 'networks', 'access', 'log', 'logs', 'router', 'server', 'cloud',
   'data', 'database', 'record', 'records', 'file', 'files', 'document', 'documents', 'form', 'forms',
-  'list', 'packing', 'shipping', 'billing', 'delivery', 'freight', 'air', 'sea', 'ocean', 'cargo',
+  'list', 'packing', 'shipping', 'billing', 'delivery', 'freight', 'cargo',
   'express', 'logistics', 'transport', 'transportation', 'warehouse', 'storage', 'distribution',
   'contact', 'phone', 'telephone', 'mobile', 'fax', 'email', 'address', 'street', 'road', 'avenue',
-  'lane', 'drive', 'court', 'place', 'square', 'park', 'industrial', 'estate', 'zone', 'district',
+  'industrial', 'estate', 'zone', 'district',
   'city', 'town', 'county', 'state', 'province', 'country', 'united', 'kingdom', 'states', 'republic',
-  'north', 'south', 'east', 'west', 'central', 'midland', 'midlands', 'northern', 'southern', 'eastern',
+  'central', 'midland', 'midlands', 'northern', 'southern', 'eastern',
   'western', 'national', 'international', 'global', 'world', 'worldwide', 'europe', 'european', 'asian',
-  'british', 'american', 'taiwan', 'tokyo', 'london', 'york', 'england', 'scotland', 'wales', 'ireland',
-  'branch', 'office', 'headquarters', 'division', 'department', 'section', 'unit', 'team', 'staff',
+  'british', 'american', 'taiwan', 'tokyo',
+  'branch', 'office', 'headquarters', 'division', 'department', 'dept', 'section', 'unit', 'team',
   'general', 'manager', 'director', 'president', 'executive', 'officer', 'chairman', 'supervisor',
   'engineer', 'specialist', 'consultant', 'coordinator', 'assistant', 'representative', 'agent',
   // Industrial / Hardware / Automotive / Company words (SUK / Machan domain)
@@ -331,24 +344,24 @@ const EN_NON_NAME_WORDS = new Set([
   'agency', 'bureau', 'institute', 'association', 'foundation', 'society', 'club', 'union', 'council',
   'authority', 'board', 'committee', 'commission', 'ministry', 'government', 'public', 'private',
   'commercial', 'commercials', 'trading', 'trade', 'import', 'export', 'wholesale', 'retail', 'direct',
-  'supply', 'supplies', 'product', 'products', 'goods', 'item', 'items', 'material', 'materials',
+  'supply', 'supplies', 'product', 'products', 'goods', 'in', 'item', 'items', 'material', 'materials',
   'equipment', 'machinery', 'machine', 'machines', 'tool', 'tools', 'tooling', 'hardware', 'software',
   'cabinet', 'cabinets', 'trolley', 'trolleys', 'workbench', 'chest', 'chests', 'box', 'boxes',
   'case', 'cases', 'rack', 'racks', 'shelf', 'shelves', 'locker', 'lockers', 'cart', 'carts',
   'heavy', 'duty', 'high', 'low', 'quality', 'standard', 'premium', 'pro', 'plus', 'ultra', 'super',
-  'max', 'mini', 'micro', 'mega', 'multi', 'auto', 'automotive', 'motor', 'motors', 'motorcycles',
-  'vehicle', 'vehicles', 'car', 'cars', 'truck', 'trucks', 'van', 'vans', 'bus', 'coach', 'fleet',
+  'mini', 'micro', 'mega', 'multi', 'auto', 'automotive', 'motor', 'motors', 'motorcycles', 'motorfactors',
+  'vehicle', 'vehicles', 'car', 'cars', 'truck', 'trucks', 'vans', 'bus', 'coach', 'fleet',
   'trailer', 'trailers', 'tyre', 'tyres', 'tire', 'tires', 'wheel', 'wheels', 'brake', 'brakes',
   'clutch', 'gear', 'gearbox', 'transmission', 'engine', 'engines', 'exhaust', 'battery', 'batteries',
-  'body', 'bodyshop', 'paint', 'panel', 'windscreen', 'glass', 'diesel', 'petrol', 'fuel', 'oil',
+  'body', 'bodyshop', 'paint', 'panel', 'windscreen', 'diesel', 'petrol', 'fuel', 'oil',
   'gas', 'power', 'energy', 'electric', 'electrical', 'electronic', 'electronics', 'digital',
   'mechanical', 'hydraulic', 'pneumatic', 'precision', 'calibration', 'testing', 'inspection',
   'engineering', 'construction', 'building', 'builders', 'property', 'properties', 'maintenance',
   'repair', 'repairs', 'workshop', 'garage', 'garages', 'station', 'depot', 'store', 'stores',
   'shop', 'shops', 'mart', 'market', 'outlet', 'factor', 'factors', 'spares', 'parts', 'components',
   'accessories', 'fittings', 'fasteners', 'fixings', 'bearings', 'seals', 'valves', 'pumps', 'pipes',
-  'tubes', 'steel', 'iron', 'metal', 'metals', 'alloy', 'aluminum', 'aluminium', 'brass', 'copper',
-  'plastic', 'plastics', 'rubber', 'wood', 'timber', 'chemical', 'chemicals', 'coating', 'coatings',
+  'tubes', 'metal', 'metals', 'alloy', 'aluminum', 'aluminium', 'brass', 'copper',
+  'plastic', 'plastics', 'rubber', 'timber', 'chemical', 'chemicals', 'coating', 'coatings',
   'welding', 'cutting', 'grinding', 'drilling', 'milling', 'turning', 'casting', 'forging', 'stamping',
   'molding', 'moulding', 'fabrication', 'manufacturing', 'manufacturer', 'makers', 'works', 'plant',
   'factory', 'mill', 'foundry', 'laboratory', 'labs', 'research', 'development', 'design', 'studio',
@@ -356,40 +369,58 @@ const EN_NON_NAME_WORDS = new Set([
   'safety', 'security', 'protection', 'fire', 'rescue', 'recovery', 'breakdown', 'assistance',
   'hire', 'rental', 'rentals', 'leasing', 'contract', 'contracts', 'project', 'projects', 'plan',
   'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth',
-  'new', 'old', 'good', 'best', 'better', 'great', 'prime', 'premier', 'choice', 'select', 'elite',
-  'classic', 'modern', 'advanced', 'smart', 'fast', 'quick', 'rapid', 'speed', 'clean', 'clear',
-  'pure', 'fresh', 'green', 'blue', 'red', 'black', 'white', 'silver', 'gold', 'golden', 'star',
-  'sun', 'moon', 'sky', 'earth', 'wind', 'water', 'wave', 'river', 'lake', 'sea', 'ocean', 'bay',
-  'hill', 'hills', 'mountain', 'valley', 'forest', 'wood', 'woods', 'field', 'fields', 'meadow',
-  'garden', 'gardens', 'farm', 'farms', 'bridge', 'gate', 'tower', 'castle', 'house', 'home',
-  'hall', 'manor', 'lodge', 'inn', 'hotel', 'motel', 'pub', 'bar', 'cafe', 'restaurant', 'bakery',
+  'better', 'premier', 'choice', 'select', 'elite',
+  'classic', 'modern', 'advanced', 'rapid',
+  'golden', 'sky', 'earth', 'wind', 'wave', 'ocean',
+  'mountain', 'valley', 'meadow',
+  'garden', 'gardens', 'farm', 'farms', 'home',
+  'inn', 'hotel', 'motel', 'pub', 'bar', 'cafe', 'restaurant', 'bakery',
   'food', 'foods', 'drink', 'drinks', 'health', 'medical', 'dental', 'clinic', 'hospital', 'pharmacy',
   'vet', 'veterinary', 'pet', 'pets', 'animal', 'animals', 'school', 'college', 'academy', 'university',
   'training', 'education', 'learning', 'sport', 'sports', 'fitness', 'gym', 'golf', 'racing', 'marine',
-  'aviation', 'aero', 'aerospace', 'defense', 'defence', 'military', 'police', 'royal', 'imperial',
-  'crown', 'king', 'queen', 'prince', 'princess', 'duke', 'lord', 'lady', 'knight', 'saint',
-  'january', 'february', 'march', 'april', 'june', 'july', 'august', 'september', 'october', 'november', 'december',
+  'aviation', 'aero', 'aerospace', 'defense', 'defence', 'military', 'police', 'imperial',
+  'crown', 'princess',
+  'january', 'february', 'april', 'july', 'september', 'october', 'november', 'december',
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
   'dear', 'thanks', 'thank', 'regards', 'sincerely', 'yours', 'faithfully', 'truly', 'subject', 'ref',
-  'reference', 'number', 'code', 'status', 'level', 'grade', 'class', 'category', 'group', 'series',
-  'model', 'version', 'edition', 'issue', 'volume', 'part', 'section', 'chapter', 'article', 'clause',
+  'reference', 'number', 'code', 'status', 'level', 'grade', 'class', 'category', 'series',
+  'model', 'version', 'edition', 'issue', 'volume', 'part', 'chapter', 'article', 'clause',
   'point', 'line', 'row', 'column', 'table', 'chart', 'graph', 'figure', 'image', 'photo', 'picture',
   'view', 'mode', 'style', 'format', 'layout', 'theme', 'color', 'colour', 'size', 'weight', 'length',
-  'width', 'height', 'depth', 'volume', 'area', 'rate', 'ratio', 'scale', 'index', 'score', 'value',
-  'card', 'cards', 'cash', 'check', 'cheque', 'bank', 'banking', 'trust', 'fund', 'funds', 'capital',
-  'asset', 'assets', 'equity', 'bond', 'bonds', 'stock', 'stocks', 'share', 'shares', 'market',
+  'width', 'height', 'depth', 'area', 'rate', 'ratio', 'scale', 'index', 'score', 'value',
+  'card', 'cards', 'check', 'cheque', 'banking', 'fund', 'funds', 'capital',
+  'asset', 'assets', 'equity', 'bonds', 'stock', 'stocks', 'share', 'shares',
 ]);
 
 function isPlausibleEnName(match: string, before = ''): boolean {
-  const words = match.trim().split(/\s+/).map((w) => w.replace(/\.$/, ''));
-  if (words.length < 2) return false;
-  const lowerWords = words.map((w) => w.toLowerCase());
+  const rawTokens = match
+    .trim()
+    .split(/[\s/]+/)
+    .map((w) => w.replace(/^[('.]+|[).',]+$/g, ''))
+    .filter(Boolean);
+  if (rawTokens.length === 0) return false;
+
+  const hasHonorificInMatch = /^(?:Mr|Mrs|Ms|Miss|Dr|Prof)$/i.test(rawTokens[0]);
+  const nameTokens = hasHonorificInMatch ? rawTokens.slice(1) : rawTokens;
+  if (nameTokens.length === 0) return false;
+
+  const lowerWords = nameTokens.map((w) => w.toLowerCase());
 
   // 1. Reject immediately if any token is a known business/report/industrial/company non-name word
   if (lowerWords.some((w) => EN_NON_NAME_WORDS.has(w))) return false;
 
-  // 2. Accept if preceded by an explicit title/honorific or contact label
+  // 2. Check if in a structured contact slot ("Totals for account : <CODE>\n"; detector passes 24 chars in `before`)
+  const inLedgerContactSlot = /account[\x20\t]*:[\x20\t]*[A-Z0-9&+\-]{2,12}[\r\n]+$/iu.test(before);
+  if (inLedgerContactSlot) {
+    return EN_GIVEN_NAMES.has(lowerWords[0]) || hasHonorificInMatch || nameTokens.length >= 2;
+  }
+
+  // Outside the structured ledger contact slot, require at least 2 name tokens (given + surname)
+  if (nameTokens.length < 2) return false;
+
+  // 3. Accept if has honorific in match or preceded by an explicit title/honorific or contact label
   if (
+    hasHonorificInMatch ||
     /(?:Mr|Mrs|Ms|Miss|Dr|Prof)\.?\s*$|(?:\b(?:Contact|Attn|Attention|Manager|Director|Representative|Prepared\s+by|Signed\s+by|Approved\s+by)|(?:聯絡人|連絡人|承辦人|負責人|業務|主管|代表人|簽署人))\s*[:：]?\s*$/iu.test(
       before,
     ) ||
@@ -398,13 +429,13 @@ function isPlausibleEnName(match: string, before = ''): boolean {
     return true;
   }
 
-  // 3. Accept if the first word is a known English given name (e.g. Bryan Long, David Miller, Claire Pirie)
+  // 4. Accept if the first word is a known English given name (e.g. Bryan Long, David Miller, Claire Pirie)
   const first = lowerWords[0];
   if (EN_GIVEN_NAMES.has(first)) return true;
 
-  // 4. Accept if the surname is a common Romanized East Asian surname or Celtic patronymic (Mc/Mac/O')
+  // 5. Accept if the surname is a common Romanized East Asian surname or Celtic patronymic (Mc/Mac/O')
   const last = lowerWords[lowerWords.length - 1];
-  const rawLast = words[words.length - 1];
+  const rawLast = nameTokens[nameTokens.length - 1];
   if (EN_ROMANIZED_SURNAMES.has(last) || /^(?:Mc|Mac|O')[A-Z][a-z]{2,}$/.test(rawLast)) {
     return true;
   }

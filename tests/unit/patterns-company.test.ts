@@ -67,6 +67,28 @@ describe('intl-company pattern', () => {
     expect(matches('intl-company', 'Nippon Steel Co., Ltd.')).toEqual(['Nippon Steel Co., Ltd.']);
   });
 
+  it('matches parenthesised and uppercase UK/international company names such as Serenco (UK) Limited', () => {
+    expect(matches('intl-company', '09 October 2026 15:23 Page 1Serenco (UK) Limited Sage 200')).toEqual([
+      'Serenco (UK) Limited',
+    ]);
+    expect(matches('intl-company', 'Direct Supply (UK) Ltd.')).toEqual(['Direct Supply (UK) Ltd.']);
+    expect(matches('intl-company', 'AA CORPORATION LIMITED')).toEqual(['AA CORPORATION LIMITED']);
+    expect(matches('intl-company', 'CWC Oxford LTD')).toEqual(['CWC Oxford LTD']);
+    expect(matches('intl-company', 'Dingbro Ltd (Aberdeen)')).toEqual(['Dingbro Ltd (Aberdeen)']);
+  });
+
+  it('matches contextual customer names in ledger Account rows', () => {
+    expect(
+      matches(
+        'contextual-customer',
+        'Account: ARM004 Armadillo Construction Services Ltd T/A Mac Tools Date Last Tran: 19/08/2026',
+      ),
+    ).toEqual(['Armadillo Construction Services Ltd T/A Mac Tools']);
+    expect(
+      matches('contextual-customer', 'Account: A14001 A14 Supplies Date Last Tran: 29/09/2026'),
+    ).toEqual(['A14 Supplies']);
+  });
+
   it('does not match ordinary English words without company suffixes', () => {
     expect(matches('intl-company', 'High Quality Steel Cabinet')).toEqual([]);
   });

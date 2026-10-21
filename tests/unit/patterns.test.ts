@@ -228,14 +228,41 @@ describe('en-name pattern', () => {
     ).toEqual(['David Miller', 'Elliott Chang', 'Bryan Long', 'Claire Pirie', 'Daniel Kim']);
   });
 
-  it('matches uncommon names when preceded by an honorific or contact label', () => {
-    expect(matches('en-name', 'Signed by: Kaito Tanaka and Mr. Soren Lindqvist')).toEqual([
-      'Kaito Tanaka',
-      'Soren Lindqvist',
+  it('matches honorifics, English surnames like Bond/Hill/King/Price/Moon, nicknames, and contact-slot names', () => {
+    expect(
+      matches(
+        'en-name',
+        "Mrs. Michelle Bond, Mr. John Hill, Elliott King, Steve Price, Lee Moon, Brian 'Nobby' Ahern, Fiona / Simon Glass, Mr. colin Bentley",
+      ),
+    ).toEqual([
+      'Mrs. Michelle Bond',
+      'Mr. John Hill',
+      'Elliott King',
+      'Steve Price',
+      'Lee Moon',
+      "Brian 'Nobby' Ahern",
+      'Fiona / Simon Glass',
+      'Mr. colin Bentley',
     ]);
   });
 
+  it('matches uncommon names when preceded by an honorific or contact label', () => {
+    expect(matches('en-name', 'Signed by: Kaito Tanaka and Mr. Soren Lindqvist')).toEqual([
+      'Kaito Tanaka',
+      'Mr. Soren Lindqvist',
+    ]);
+  });
+
+  it('matches structured ledger contact slot names while ignoring non-person placeholders', () => {
+    expect(
+      matches(
+        'en-name',
+        'Totals for account : BED001\nBernard 44 01582 585231\nTotals for account : DSY001\ndavid lane 01621 850777\nTotals for account : ACT002\naccounts 01527 528848',
+      ),
+    ).toEqual(['Bernard', 'david lane']);
+  });
+
   it('does not match common commercial phrases, ledger headers, or industrial company words', () => {
-    expect(matches('en-name', 'SUK Sales Ledger Aged Debtors Report, Age Against: Transaction Date, Tran Type, Days From, Credit Note, Purchase Order, Total Amount, Support Desk, Heavy Duty, Calibration Engineering, Body Factors')).toEqual([]);
+    expect(matches('en-name', 'SUK Sales Ledger Aged Debtors Report, Age Against: Transaction Date, Tran Type, Days From, Credit Note, Purchase Order, Total Amount, Support Desk, Heavy Duty, Calibration Engineering, Body Factors, Purchase Ledger, Goods In')).toEqual([]);
   });
 });
