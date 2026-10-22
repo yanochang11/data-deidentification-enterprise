@@ -23,6 +23,7 @@ export interface Pattern {
   example: string;
   enabled: boolean;
   retention?: Retention;
+  customCode?: string;
   /** Builtin-only: the rules page group (台灣格式／國際與通用格式); custom rules form their own group. */
   group?: 'tw' | 'intl';
   /** Builtin-only: how matches are checked beyond the RegExp (checksum, valid ranges), shown with the rule. */
@@ -47,6 +48,7 @@ export interface RedactionItem {
   active: boolean;
   /** Retention from the rule that detected it, or the one chosen when adding it manually. */
   retention?: Retention;
+  customCode?: string;
   /** Characters of `original` kept visible before / after the marker; absent means 0. */
   head?: number;
   tail?: number;

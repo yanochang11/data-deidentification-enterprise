@@ -28,6 +28,7 @@ function makeItem(
   const original = text.slice(start, end);
   const item: RedactionItem = { id: newId(), category, original, start, end, code: '', origin, active: true };
   if (retention) item.retention = retention;
+  if (customCode) item.customCode = customCode;
   applySplit(item, retention, book, customCode);
   return item;
 }
@@ -38,7 +39,7 @@ function applySplit(item: RedactionItem, retention: Retention | undefined, book:
   else delete item.head;
   if (tail) item.tail = tail;
   else delete item.tail;
-  item.code = book.codeFor(item.category, item.original, head, tail, customCode);
+  item.code = book.codeFor(item.category, item.original, head, tail, customCode ?? item.customCode);
 }
 
 /**

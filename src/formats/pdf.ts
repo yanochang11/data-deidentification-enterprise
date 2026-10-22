@@ -111,10 +111,34 @@ export function assemblePdf(fileName: string, rawPages: PdfPage[], ocr = false):
             text += ' ';
           }
         }
-        segments.push({ start: text.length, end: text.length + it.text.length, text: it.text });
-        itemPage.push(p);
-        itemIndex.push(items.length);
-        items.push({ text: it.text, x, y, fontSize: size, width: it.width, ...(it.color && { color: it.color }) });
+        const prevItem = items[items.length - 1];
+        const prevSeg = segments[segments.length - 1];
+        const sameColor =
+          (!prevItem?.color && !it.color) ||
+          (prevItem?.color !== undefined &&
+            it.color !== undefined &&
+            prevItem.color[0] === it.color[0] &&
+            prevItem.color[1] === it.color[1] &&
+            prevItem.color[2] === it.color[2]);
+        if (
+          prevItem !== undefined &&
+          sameLine &&
+          Math.abs(prevItem.fontSize - size) < 1.0 &&
+          sameColor &&
+          x >= lastEndX - size * 0.25 &&
+          x - lastEndX <= size * 0.25 &&
+          prevSeg.end === text.length
+        ) {
+          prevItem.text += it.text;
+          prevItem.width = Math.max(prevItem.width, x + it.width - prevItem.x);
+          prevSeg.end += it.text.length;
+          prevSeg.text += it.text;
+        } else {
+          segments.push({ start: text.length, end: text.length + it.text.length, text: it.text });
+          itemPage.push(p);
+          itemIndex.push(items.length);
+          items.push({ text: it.text, x, y, fontSize: size, width: it.width, ...(it.color && { color: it.color }) });
+        }
         text += it.text;
         lastEndX = x + it.width;
         lastY = y;
@@ -237,15 +261,33 @@ export async function generatePdf(doc: LoadedDocument, edits: TextEdit[]): Promi
     }
     for (const b of pg.checkboxes ?? []) drawCheckbox(page, b);
     const pageChanges = newTexts.get(pIdx);
+    let lastDrawnY = Number.NaN;
+    let lastDrawnEndX = Number.NaN;
+    let lastOrigStartX = Number.NaN;
+    let lastOrigEndX = Number.NaN;
+    let lastFontSize = Number.NaN;
     pg.items.forEach((it, iIdx) => {
       const changed = pageChanges?.has(iIdx) ?? false;
       const text = sanitizeForFont(changed ? pageChanges!.get(iIdx)! : it.text, supported);
       if (text.length === 0) return;
       // Replacement text may run past the original item; let it use the space up to the right
       // margin before shrinking, so whole-line items keep their size.
-      const room = Math.max(it.width, pg.width - it.x - 36);
+      const sameDrawnLine = !Number.isNaN(lastDrawnY) && Math.abs(it.y - lastDrawnY) < Math.min(it.fontSize, lastFontSize) * 0.5 && it.x >= lastOrigStartX;
+      const minGap = sameDrawnLine ? Math.max(2, Math.min(it.x - lastOrigEndX, it.fontSize * 0.5)) : 0;
+      const drawX = sameDrawnLine && lastDrawnEndX + minGap > it.x ? lastDrawnEndX + minGap : it.x;
+      let room = Math.max(it.width, pg.width - drawX - 36);
+      for (const o of pg.items) {
+        if (o.x > it.x + it.width + it.fontSize * 2.5 && Math.abs(o.y - it.y) < Math.min(o.fontSize, it.fontSize) * 0.5) {
+          room = Math.min(room, Math.max(it.width, o.x - drawX - 3));
+        }
+      }
       const size = doc.ocr ? fitSize(font, text, it.fontSize, roomOnLine(pg, it)) : changed ? fitSize(font, text, it.fontSize, room) : it.fontSize;
-      page.drawText(text, { x: it.x, y: it.y, size, font, ...(it.color && { color: colour(it.color) }) });
+      page.drawText(text, { x: drawX, y: it.y, size, font, ...(it.color && { color: colour(it.color) }) });
+      lastDrawnY = it.y;
+      lastDrawnEndX = drawX + font.widthOfTextAtSize(text, size);
+      lastOrigStartX = it.x;
+      lastOrigEndX = it.x + it.width;
+      lastFontSize = it.fontSize;
     });
   });
 

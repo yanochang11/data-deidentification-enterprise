@@ -14,6 +14,56 @@ const NONE: Split = { head: 0, tail: 0 };
 const CITY_RE = new RegExp(`^${CITIES}`, 'u');
 const DISTRICT_RE = /^[一-龥]{1,4}?[鄉鎮市區]/u;
 
+const SAFE_EMAIL_DOMAINS = new Set([
+  'machangroup.com',
+  'machan.com.tw',
+  'machangp.com',
+  'gmail.com',
+  'googlemail.com',
+  'yahoo.com',
+  'yahoo.com.tw',
+  'ymail.com',
+  'hotmail.com',
+  'outlook.com',
+  'live.com',
+  'msn.com',
+  'icloud.com',
+  'me.com',
+  'mac.com',
+  'aol.com',
+  'protonmail.com',
+  'proton.me',
+  'zoho.com',
+  'gmx.com',
+  'mail.com',
+  'msa.hinet.net',
+  'umail.hinet.net',
+  'hinet.net',
+  'seed.net.tw',
+  'pchome.com.tw',
+  'example.com',
+  'example.org',
+  'example.net',
+  'example.edu',
+  'example.com.tw',
+]);
+
+export function isSafeEmailDomain(domain: string): boolean {
+  const d = domain.trim().toLowerCase();
+  if (!d) return false;
+  if (SAFE_EMAIL_DOMAINS.has(d)) return true;
+  if (
+    d.endsWith('.machangroup.com') ||
+    d.endsWith('.machan.com.tw') ||
+    d.endsWith('.example.com') ||
+    d.endsWith('.example.org') ||
+    d.endsWith('.example.net')
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function modesFor(category: Category): RetentionMode[] {
   const modes: RetentionMode[] = ['none', 'ends', 'delim'];
   if (category === '姓名') modes.push('surname');
@@ -82,12 +132,13 @@ export function standardSplit(category: Category, value: string): Split {
       return rawSplit(value, { mode: 'district' }, category);
     case '電子郵件': {
       const at = value.indexOf('@');
-      return at > 0 ? { head: 0, tail: value.length - at } : NONE;
+      return at > 0 && isSafeEmailDomain(value.slice(at + 1)) ? { head: 0, tail: value.length - at } : NONE;
     }
     case '公司': {
       const m = value.match(COMPANY_MASK_RE);
       return m ? { head: 0, tail: m[3].length } : NONE;
     }
+    case '客戶':
     case '統編':
     case 'SSN':
       return NONE;
@@ -121,7 +172,7 @@ function rawSplit(value: string, r: Retention, category: Category): Split {
       if (!r.delimiter) return NONE;
       if (r.side === 'after') {
         const i = value.indexOf(r.delimiter);
-        return i < 0 ? NONE : { head: 0, tail: value.length - i };
+        return i < 0 || (category === '電子郵件' && r.delimiter === '@' && !isSafeEmailDomain(value.slice(i + 1))) ? NONE : { head: 0, tail: value.length - i };
       }
       const i = value.lastIndexOf(r.delimiter);
       return i < 0 ? NONE : { head: i + r.delimiter.length, tail: 0 };

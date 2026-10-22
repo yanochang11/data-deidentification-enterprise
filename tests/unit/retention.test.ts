@@ -166,6 +166,9 @@ describe('standard 部分保留 (default output mode)', () => {
     ['市話', '0227123456', /^02\[市話:\w{6}\]$/],
     ['地址', '台北市信義區市府路45號8樓', /^台北市信義區\[地址:\w{6}\]$/],
     ['電子郵件', 'amy.chen@gmail.com', /^\[電子郵件:\w{6}\]@gmail\.com$/],
+    ['電子郵件', 'elliott.chang@machangroup.com', /^\[電子郵件:\w{6}\]@machangroup\.com$/],
+    ['電子郵件', 'david.miller@grainger.com', /^\[電子郵件:\w{6}\]$/],
+    ['客戶', 'Apex', /^\[客戶:\w{6}\]$/],
     ['公司', '築夢實業股份有限公司', /^\[公司:\w{6}\]股份有限公司$/],
     ['統編', '04595257', /^\[統編:\w{6}\]$/],
     ['識別碼', 'EMP-004521', /^E\[識別碼:\w{6}\]$/],
@@ -192,6 +195,15 @@ describe('resplitItems', () => {
     expect(code.redactedText).toMatch(/^\[姓名:\w{6}\] \[身分證:\w{6}\] \[手機:\w{6}\]$/);
     expect(items.every((i) => !i.head && !i.tail)).toBe(true);
     expect(restore(code.redactedText, code.mapping).restoredText).toBe(text);
+    const custText = '內部配置 Apex (CA0005) 專用泡棉，聯絡信箱 david.miller@grainger.com 與 elliott.chang@machangroup.com';
+    const custBook = new CodeBook();
+    const custItems = detect(custText, BUILTIN_PATTERNS, custBook);
+    resplitItems(custItems, custBook, () => ({ mode: 'preview' }));
+    const custPreview = applyRedactions(custText, custItems);
+    expect(custPreview.redactedText).toContain('[客戶:CA0005]');
+    expect(custPreview.redactedText).not.toContain('@grainger.com');
+    expect(custPreview.redactedText).toMatch(/\[電子郵件:\w{6}\]@machangroup\.com/);
+    expect(restore(custPreview.redactedText, custPreview.mapping).restoredText).toBe(custText);
   });
 });
 
